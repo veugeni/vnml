@@ -1,0 +1,401 @@
+.VNApp {
+  width: 100vw;
+  height: 100vh;
+  background-color: aqua;
+  overflow: hidden;
+  min-width: 375px;
+  min-height: 667px;
+  display: block !important;
+}
+
+.VNBackground {
+  position: fixed;
+  top: 0px;
+  left: 0px;
+  width: 100vw;
+  height: 100vh;
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover;
+  z-index: 100;
+  display: block !important;
+}
+
+.VNBottomContainer {
+  position: absolute;
+  bottom: 0px;
+  left: 0px;
+  width: 100vw;
+  height: 33vh;
+  background-color: bisque;
+  z-index: 250;
+  display: flex;
+}
+
+.VNTextWindow {
+  width: 100%;
+  height: 100%;
+  background-color: bisque;
+  z-index: 300;
+  position: relative;
+  display: block;
+}
+
+.VNTextWindowLayer {
+  width: 100%;
+  height: 100%;
+  background-color: aqua;
+  z-index: 310;
+  position: absolute;
+}
+
+.VNTextScroller {
+  width: calc(100% - 40px);
+  height: calc(100% - 40px);
+  overflow: auto;
+  text-justify: inter-word;
+  text-align: justify;
+  margin: 20px;
+  z-index: 320;
+  position: absolute;
+  display: block;
+}
+
+.VNTextWindowLabel {
+  background-color: blue;
+  color: white;
+  font-size: medium;
+  position: absolute;
+  top: -2rem;
+  max-width: 25%;
+  min-width: 200px;
+  padding: 1rem;
+  z-index: 330;
+  display: block;
+}
+
+.VNTextWindowProceed {
+  background-color: blueviolet;
+  color: white;
+  font-size: medium;
+  position: relative;
+  top: 0px;
+  right: 0px;
+  width: 3rem;
+  height: 3rem;
+  z-index: 300;
+  min-width: 36px;
+  min-height: 36px;
+  display: block;
+}
+
+.VNCharacter {
+  position: absolute;
+  top: 0px;
+  height: 100vh;
+  width: 33vw;
+  background-repeat: no-repeat;
+  background-position: center top;
+  background-size: cover;
+  z-index: 200;
+  display: block;
+}
+
+.VNCAnchorRight {
+  right: 0px;
+}
+
+.VNCAnchorLeft {
+  left: 0px;
+}
+
+.VNCAnchorMiddle {
+  left: 34vw;
+}
+
+.VNCFlip {
+  -webkit-transform: scaleX(-1);
+  transform: scaleX(-1);
+}
+
+.VNChooseWindow {
+  background-color: blue;
+  color: white;
+  font-size: medium;
+  min-width: 200px;
+  padding: 1rem;
+  z-index: 400;
+  width: 100%;
+  display: block;
+}
+
+.VNChooseScroller {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: antiquewhite;
+  padding: 0.5rem;
+  display: block;
+}
+
+.VNChooseItem {
+  height: 20%;
+  width: 100%;
+  background-color: burlywood;
+  color: red;
+  min-height: 30px;
+  max-height: 35px;
+  display: block;
+}
+
+.VNMenuButton {
+  width: 3rem;
+  height: 3rem;
+  min-width: 2rem;
+  min-height: 2rem;
+  position: fixed;
+  left: 0px;
+  top: 0px;
+  background-color: chartreuse;
+  color: black;
+  z-index: 1000;
+}
+
+.VNMenu {
+  display: none;
+  position: fixed;
+  left: 0px;
+  top: 0px;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1001;
+  justify-content: center;
+  align-items: center;
+}
+
+.VNMenuOverlay {
+  display: flex;
+  position: fixed;
+  left: 0px;
+  top: 0px;
+  width: 100vw;
+  height: 100vh;
+  background-color: black;
+  opacity: 0.8;
+  z-index: 1002;
+}
+
+.VNMenuContent {
+  display: flex;
+  flex-direction: column;
+  width: 50vw;
+  height: 50vh;
+  min-height: 300px;
+  min-width: 300px;
+  max-width: 600px;
+  max-height: 800px;
+  background-color: blueviolet;
+  justify-content: center;
+  align-items: center;
+  z-index: 1003;
+}
+
+.VNMenuContentLarge {
+  width: 90vw;
+  height: 90vh;
+  min-height: 300px;
+  min-width: 300px;
+  max-width: 1024px;
+  max-height: 1024px;
+}
+
+.VNMenuItem {
+  display: flex;
+  flex-direction: column;
+  width: 80%;
+  height: 3rem;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid white;
+  border-radius: 5px;
+  margin-bottom: 0.5rem;
+  color: aqua;
+  cursor: pointer;
+}
+
+.VNMenuItem:hover {
+  color: white;
+}
+
+.VNBorderUL,
+.VNBorderUR,
+.VNBorderDR,
+.VNBorderDL {
+  width: 20px;
+  height: 20px;
+  background-repeat: no-repeat;
+  position: absolute;
+}
+
+.VNBorderU,
+.VNBorderD {
+  width: calc(100% - 40px);
+  height: 20px;
+  background-repeat: repeat-x;
+  position: absolute;
+}
+
+.VNBorderL,
+.VNBorderR {
+  width: 20px;
+  height: calc(100% - 40px);
+  background-repeat: repeat-y;
+  position: absolute;
+}
+
+.VNBorderUL {
+  top: 0px;
+  left: 0px;
+}
+
+.VNBorderUR {
+  top: 0px;
+  right: 0px;
+}
+
+.VNBorderDL {
+  bottom: 0px;
+  left: 0px;
+}
+
+.VNBorderDR {
+  bottom: 0px;
+  right: 0px;
+}
+
+.VNBorderU {
+  top: 0px;
+  left: 20px;
+}
+
+.VNBorderD {
+  bottom: 0px;
+  left: 20px;
+}
+
+.VNBorderL {
+  top: 20px;
+  left: 0px;
+}
+
+.VNBorderR {
+  top: 20px;
+  right: 0px;
+}
+
+/* Schermi grandi o ad alta risoluzione */
+@media all and (max-width: 1690px) {
+  .VNBottomContainer {
+    background-color: aquamarine;
+    max-height: 500px;
+  }
+
+  .VNTextWindow {
+    background-color: aquamarine;
+    max-width: 800px;
+  }
+}
+
+/* Schermi Desktop o Portatili */
+@media all and (min-width: 1280px) and (max-width: 1689px) {
+  .VNBottomContainer {
+    background-color: blueviolet;
+    max-height: 500px;
+  }
+
+  .VNTextWindow {
+    background-color: blueviolet;
+    max-width: 800px;
+  }
+
+  .VNChooseWindow {
+    background-color: blueviolet;
+    max-width: 500px;
+  }
+}
+
+/* Tablet in modalità orizzontale */
+@media all and (min-width: 737px) and (max-width: 1279px) {
+  .VNBottomContainer {
+    background-color: chartreuse;
+    max-height: 500px;
+  }
+
+  .VNTextWindow {
+    background-color: chartreuse;
+  }
+
+  .VNChooseWindow {
+    background-color: chartreuse;
+    max-width: 400px;
+  }
+}
+
+/* Tablet in modalità verticale */
+@media all and (min-width: 481px) and (max-width: 736px) {
+  .VNBottomContainer {
+    background-color: chocolate;
+    height: 50vh;
+  }
+  .VNTextWindow {
+    background-color: chocolate;
+  }
+  .VNChooseWindow {
+    background-color: chocolate;
+  }
+}
+
+/* Smartphone o piccoli Tablet */
+@media all and (max-width: 480px) {
+  .VNBottomContainer {
+    background-color: crimson;
+    top: 0px;
+    height: 100vh;
+    max-height: 100vh;
+    flex-direction: column;
+  }
+
+  .VNTextWindow {
+    background-color: crimson;
+    max-height: 70vh;
+  }
+
+  .VNTextWindowLabel {
+    background-color: blueviolet;
+    color: white;
+    top: 0px;
+    max-width: 100%;
+    width: calc(100% - 2rem);
+    padding: 1rem;
+  }
+
+  .VNTextScroller {
+    background-color: aqua;
+    margin-top: 4rem;
+    height: calc(100% - 2rem);
+  }
+
+  .VNChooseWindow {
+    background-color: chocolate;
+    height: 30vh;
+  }
+
+  .VNTextWindowProceed {
+    align-self: flex-end;
+  }
+
+  .VNMenuButton {
+    left: unset;
+    right: 0px;
+  }
+}
