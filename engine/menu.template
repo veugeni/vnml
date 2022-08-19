@@ -12,6 +12,6 @@
   </head>
 
   <body>
-    <p style="display:block; color:white; cursor: pointer" onclick="window.open('$DESTINATION$')">CLICK ME: SONO UN MENU!</p>
+    <p style="display:block; color:white; cursor: pointer" onclick="window.open('$DESTINATION$','_self')">CLICK ME: SONO UN MENU!</p>
   </body>
 </html>

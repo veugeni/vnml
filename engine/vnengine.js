@@ -34,6 +34,7 @@ const context = {
     twTextIndex: 0,
     isWriting: false,
     writingText: "",
+    choosing: false,
 };
 const Config = {
     typeWriterSpeed: 50,
@@ -281,6 +282,7 @@ function setParagraph(text) {
     elements.ch.innerHTML = "";
     elements.chf.setAttribute("style", "display:none");
     elements.nx.setAttribute("style", "display:block");
+    context.choosing = false;
     context.lines = splitInLines(text);
     context.subPage = 0;
     if (context.lines.length > 0) {
@@ -398,6 +400,7 @@ function parseConditionalOperator(e) {
 function parseChoice(e) {
     elements.chf.setAttribute("style", "display:block");
     elements.nx.setAttribute("style", "display:none");
+    context.choosing = true;
     console.log("scelta", e.innerText);
     const text = collectText(e);
     if (text !== "") {
@@ -432,7 +435,7 @@ function seekTag(tag) {
 }
 function appendChoice(text, next) {
     const choice = document.createElement("div");
-    choice.className = "VNChooseItem";
+    choice.className = "VNChooseItem OptionStyle";
     choice.innerHTML = text;
     choice.addEventListener("click", () => {
         console.log("Cliccato evento");
@@ -442,6 +445,16 @@ function appendChoice(text, next) {
     });
     elements.ch.appendChild(choice);
 }
+function clickArea(origin) {
+    switch (origin) {
+        case "chapter":
+        case "proceed":
+        case "choose":
+            if (!context.choosing)
+                fetchParagraph();
+            break;
+    }
+}
 function addFrontend() {
     const template = `
       <div class="VNBackground"></div>
@@ -449,15 +462,15 @@ function addFrontend() {
       <div class="VNCharacter VNCAnchorLeft"></div>
       <div class="VNCharacter VNCAnchorMiddle"></div>
       <div class="VNBottomContainer">
-        <div class="VNTextWindow ChapterBackground">
-          <div class="VNTextWindowLabel LabelBackground"></div>
+        <div class="VNTextWindow ChapterStyle" onclick="clickArea('chapter')">
+          <div class="VNTextWindowLabel LabelStyle"></div>
           <div class="VNTextScroller TextStyle"></div>
         </div>
-        <div class="VNTextWindowProceed" onClick="fetchParagraph()">>></div>
-        <div class="VNChooseWindow">
+        <div class="VNChooseWindow ChooseStyle" onclick="clickArea('choose')">
           <div class="VNChooseScroller">            
           </div>
         </div>
+        <div class="VNTextWindowProceed ButtonStyle" onclick="clickArea('proceed')"></div>
       </div>
     `;
     const p = document.createElement("div");

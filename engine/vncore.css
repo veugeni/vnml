@@ -175,13 +175,8 @@ body {
   z-index: 300;
   position: relative;
   display: block;
-}
-
-.VNTextWindowLayer {
-  width: 100%;
-  height: 100%;
-  z-index: 310;
-  position: absolute;
+  flex-grow: 1;
+  min-width: 60vw;
 }
 
 .VNTextScroller {
@@ -207,17 +202,38 @@ body {
 }
 
 .VNTextWindowProceed {
-  color: white;
-  font-size: medium;
-  position: relative;
-  top: 0px;
+  position: absolute;
   right: 0px;
-  width: 3rem;
-  height: 3rem;
-  z-index: 300;
+  bottom: 0px;
+  width: 2rem;
+  height: 2rem;
+  z-index: 500;
   min-width: 36px;
   min-height: 36px;
   display: block;
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: contain;
+  cursor: pointer;
+  animation-name: proceed;
+  animation-duration: 5s;
+  animation-delay: 1s;
+  animation-iteration-count: infinite;
+}
+
+@keyframes proceed {
+  0% {
+    bottom: 15px;
+    opacity: 0.5;
+  }
+  50% {
+    bottom: 0px;
+    opacity: 1;
+  }
+  100% {
+    bottom: 15px;
+    opacity: 0.5;
+  }
 }
 
 .VNCharacter {
@@ -227,7 +243,7 @@ body {
   width: 33vw;
   background-repeat: no-repeat;
   background-position: center top;
-  background-size: cover;
+  background-size: contain;
   z-index: 200;
   display: block;
 }
@@ -250,20 +266,18 @@ body {
 }
 
 .VNChooseWindow {
-  color: white;
-  font-size: medium;
   min-width: 200px;
   padding: 1rem;
   z-index: 400;
   width: 100%;
   display: block;
+  font-size: 24px;
 }
 
 .VNChooseScroller {
   width: 100%;
   height: 100%;
   overflow: auto;
-  background-color: antiquewhite;
   padding: 0.5rem;
   display: block;
 }
@@ -271,10 +285,10 @@ body {
 .VNChooseItem {
   height: 20%;
   width: 100%;
-  background-color: burlywood;
   min-height: 30px;
-  max-height: 35px;
   display: block;
+  margin-bottom: 1.5rem;
+  cursor: pointer;
 }
 
 .VNMenuButton {
@@ -351,72 +365,6 @@ body {
   color: white;
 }
 
-.VNBorderUL,
-.VNBorderUR,
-.VNBorderDR,
-.VNBorderDL {
-  width: 20px;
-  height: 20px;
-  background-repeat: no-repeat;
-  position: absolute;
-}
-
-.VNBorderU,
-.VNBorderD {
-  width: calc(100% - 40px);
-  height: 20px;
-  background-repeat: repeat-x;
-  position: absolute;
-}
-
-.VNBorderL,
-.VNBorderR {
-  width: 20px;
-  height: calc(100% - 40px);
-  background-repeat: repeat-y;
-  position: absolute;
-}
-
-.VNBorderUL {
-  top: 0px;
-  left: 0px;
-}
-
-.VNBorderUR {
-  top: 0px;
-  right: 0px;
-}
-
-.VNBorderDL {
-  bottom: 0px;
-  left: 0px;
-}
-
-.VNBorderDR {
-  bottom: 0px;
-  right: 0px;
-}
-
-.VNBorderU {
-  top: 0px;
-  left: 20px;
-}
-
-.VNBorderD {
-  bottom: 0px;
-  left: 20px;
-}
-
-.VNBorderL {
-  top: 20px;
-  left: 0px;
-}
-
-.VNBorderR {
-  top: 20px;
-  right: 0px;
-}
-
 /* Schermi grandi o ad alta risoluzione */
 @media all and (max-width: 1690px) {
   .VNBottomContainer {
@@ -424,12 +372,12 @@ body {
   }
 
   .VNTextWindow {
-    max-width: 800px;
+    min-width: 60vw;
     font-size: 48px;
   }
 
   .VNChooseWindow {
-    font-size: 48px;
+    font-size: 24px;
   }
 }
 
@@ -440,13 +388,12 @@ body {
   }
 
   .VNTextWindow {
-    max-width: 800px;
+    min-width: 60vw;
     font-size: 36px;
   }
 
   .VNChooseWindow {
-    max-width: 500px;
-    font-size: 36px;
+    font-size: 24px;
   }
 }
 
@@ -461,8 +408,7 @@ body {
   }
 
   .VNChooseWindow {
-    max-width: 400px;
-    font-size: 36px;
+    font-size: 24px;
   }
 }
 
@@ -475,7 +421,7 @@ body {
     font-size: 36px;
   }
   .VNChooseWindow {
-    font-size: 36px;
+    font-size: 24px;
   }
 }
 
@@ -508,7 +454,7 @@ body {
 
   .VNChooseWindow {
     height: 30vh;
-    font-size: 24px;
+    font-size: 16px;
   }
 
   .VNTextWindowProceed {
@@ -523,19 +469,37 @@ body {
 }
 
 /* Styling */
-.ChapterBackground {
+.ChapterStyle,
+.ChooseStyle {
   background-image: linear-gradient(
     to bottom,
-    rgba(0, 0, 0, 0.9),
-    rgba(0, 0, 0, 0.5),
-    rgba(0, 0, 0, 0.9)
+    rgba(0, 0, 0, 0),
+    rgba(0, 0, 0, 0.9) 5%,
+    rgba(0, 0, 0, 0.5) 50%,
+    rgba(0, 0, 0, 0.9) 95%,
+    rgba(0, 0, 0, 0)
   );
   background-repeat: no-repeat;
 }
 
-.LabelBackground {
+.ButtonStyle {
+  background-image: url("res/proceed.svg");
+  margin-right: 1rem;
+  margin-bottom: 1rem;
+}
+
+.LabelStyle {
 }
 
 .TextStyle {
   color: rgb(212, 203, 232);
+}
+
+.OptionStyle {
+  color: gray;
+}
+
+.OptionStyle:hover {
+  color: white;
+  transition-duration: 0.5s;
 }
