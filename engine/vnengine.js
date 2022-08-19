@@ -30,6 +30,13 @@ const context = {
     saveToken: "",
     state: "SEEK_PARAGRAPH",
     cursor: 0,
+    typeWriter: 0,
+    twTextIndex: 0,
+    isWriting: false,
+    writingText: "",
+};
+const Config = {
+    typeWriterSpeed: 50,
 };
 const paragraphLimit = 300;
 const version = "1.0";
@@ -76,7 +83,7 @@ function nextSubpage() {
     context.subPage++;
     if (context.lines.length > 0 && context.subPage < context.lines.length) {
         console.log("next sub page", context.subPage, context.lines.length);
-        elements.p.innerHTML = context.lines[context.subPage];
+        typeWriter(context.lines[context.subPage]);
         if (context.subPage === context.lines.length - 1) {
             console.log("Sub pages ended");
             context.lines = [];
@@ -195,6 +202,11 @@ function fetchParagraph() {
     let fetchNext = true;
     let token = null;
     console.log("fetch: " + context.state);
+    if (context.isWriting) {
+        console.log("Resetting typewriter");
+        showAllText();
+        return;
+    }
     if (context.state === "SWITCH_SUBPAGE") {
         if (!nextSubpage()) {
             context.state = "FETCH_CHOICES";
@@ -272,10 +284,10 @@ function setParagraph(text) {
     context.lines = splitInLines(text);
     context.subPage = 0;
     if (context.lines.length > 0) {
-        elements.p.innerHTML = context.lines[0];
+        typeWriter(context.lines[0]);
     }
     else {
-        elements.p.innerHTML = "";
+        typeWriter("");
     }
 }
 function splitInLines(text) {
@@ -437,9 +449,9 @@ function addFrontend() {
       <div class="VNCharacter VNCAnchorLeft"></div>
       <div class="VNCharacter VNCAnchorMiddle"></div>
       <div class="VNBottomContainer">
-        <div class="VNTextWindow">
-          <div class="VNTextWindowLabel"></div>
-          <div class="VNTextScroller"></div>
+        <div class="VNTextWindow ChapterBackground">
+          <div class="VNTextWindowLabel LabelBackground"></div>
+          <div class="VNTextScroller TextStyle"></div>
         </div>
         <div class="VNTextWindowProceed" onClick="fetchParagraph()">>></div>
         <div class="VNChooseWindow">
@@ -457,9 +469,28 @@ function addFrontend() {
     p.appendChild(elements.ms);
     document.querySelector("body").appendChild(p);
 }
-function fetchVNML(url, callback) {
-    console.log("Fetching vnml ", url);
-    fetch(url)
-        .then((response) => response.text())
-        .then((data) => callback(data));
+function typeWriter(text) {
+    context.twTextIndex = 0;
+    context.isWriting = false;
+    elements.p.innerHTML = "";
+    context.writingText = "";
+    if (text !== "") {
+        context.writingText = text;
+        context.typeWriter = window.setInterval(() => {
+            if (context.twTextIndex < text.length) {
+                elements.p.innerHTML += text[context.twTextIndex];
+                context.twTextIndex++;
+                context.isWriting = true;
+            }
+            else {
+                window.clearInterval(context.typeWriter);
+                context.isWriting = false;
+            }
+        }, Config.typeWriterSpeed);
+    }
+}
+function showAllText() {
+    window.clearInterval(context.typeWriter);
+    context.isWriting = false;
+    elements.p.innerHTML = context.writingText;
 }

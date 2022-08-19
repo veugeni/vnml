@@ -9,10 +9,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@300&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="vncore.css" />
-    <script src="vnengine.js"></script>
   </head>
 
-  <body onload="vnml()">
-    $ITSAME$
+  <body>
+    <p style="display:block; color:white; cursor: pointer" onclick="window.open('$DESTINATION$')">CLICK ME: SONO UN MENU!</p>
   </body>
 </html>

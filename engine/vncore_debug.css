@@ -131,15 +131,10 @@ showifnonzero {
   display: none;
 }
 
-body {
-  font-family: "Inconsolata", monospace;
-  font-size: 48px;
-  background-color: black;
-}
-
 .VNApp {
   width: 100vw;
   height: 100vh;
+  background-color: aqua;
   overflow: hidden;
   min-width: 375px;
   min-height: 667px;
@@ -165,6 +160,7 @@ body {
   left: 0px;
   width: 100vw;
   height: 33vh;
+  background-color: bisque;
   z-index: 250;
   display: flex;
 }
@@ -172,6 +168,7 @@ body {
 .VNTextWindow {
   width: 100%;
   height: 100%;
+  background-color: bisque;
   z-index: 300;
   position: relative;
   display: block;
@@ -180,6 +177,7 @@ body {
 .VNTextWindowLayer {
   width: 100%;
   height: 100%;
+  background-color: aqua;
   z-index: 310;
   position: absolute;
 }
@@ -188,6 +186,8 @@ body {
   width: calc(100% - 40px);
   height: calc(100% - 40px);
   overflow: auto;
+  text-justify: inter-word;
+  text-align: justify;
   margin: 20px;
   z-index: 320;
   position: absolute;
@@ -195,6 +195,7 @@ body {
 }
 
 .VNTextWindowLabel {
+  background-color: blue;
   color: white;
   font-size: medium;
   position: absolute;
@@ -207,6 +208,7 @@ body {
 }
 
 .VNTextWindowProceed {
+  background-color: blueviolet;
   color: white;
   font-size: medium;
   position: relative;
@@ -250,6 +252,7 @@ body {
 }
 
 .VNChooseWindow {
+  background-color: blue;
   color: white;
   font-size: medium;
   min-width: 200px;
@@ -272,6 +275,7 @@ body {
   height: 20%;
   width: 100%;
   background-color: burlywood;
+  color: red;
   min-height: 30px;
   max-height: 35px;
   display: block;
@@ -285,6 +289,8 @@ body {
   position: fixed;
   left: 0px;
   top: 0px;
+  background-color: chartreuse;
+  color: black;
   z-index: 1000;
 }
 
@@ -307,6 +313,7 @@ body {
   top: 0px;
   width: 100vw;
   height: 100vh;
+  background-color: black;
   opacity: 0.8;
   z-index: 1002;
 }
@@ -320,6 +327,7 @@ body {
   min-width: 300px;
   max-width: 600px;
   max-height: 800px;
+  background-color: blueviolet;
   justify-content: center;
   align-items: center;
   z-index: 1003;
@@ -344,6 +352,7 @@ body {
   border: 1px solid white;
   border-radius: 5px;
   margin-bottom: 0.5rem;
+  color: aqua;
   cursor: pointer;
 }
 
@@ -420,68 +429,69 @@ body {
 /* Schermi grandi o ad alta risoluzione */
 @media all and (max-width: 1690px) {
   .VNBottomContainer {
+    background-color: aquamarine;
     max-height: 500px;
   }
 
   .VNTextWindow {
+    background-color: aquamarine;
     max-width: 800px;
-    font-size: 48px;
-  }
-
-  .VNChooseWindow {
-    font-size: 48px;
   }
 }
 
 /* Schermi Desktop o Portatili */
 @media all and (min-width: 1280px) and (max-width: 1689px) {
   .VNBottomContainer {
+    background-color: blueviolet;
     max-height: 500px;
   }
 
   .VNTextWindow {
+    background-color: blueviolet;
     max-width: 800px;
-    font-size: 36px;
   }
 
   .VNChooseWindow {
+    background-color: blueviolet;
     max-width: 500px;
-    font-size: 36px;
   }
 }
 
 /* Tablet in modalità orizzontale */
 @media all and (min-width: 737px) and (max-width: 1279px) {
   .VNBottomContainer {
+    background-color: chartreuse;
     max-height: 500px;
   }
 
   .VNTextWindow {
-    font-size: 36px;
+    background-color: chartreuse;
   }
 
   .VNChooseWindow {
+    background-color: chartreuse;
     max-width: 400px;
-    font-size: 36px;
   }
 }
 
 /* Tablet in modalità verticale */
 @media all and (min-width: 481px) and (max-width: 736px) {
   .VNBottomContainer {
+    background-color: chocolate;
     height: 50vh;
   }
   .VNTextWindow {
-    font-size: 36px;
+    background-color: chocolate;
   }
   .VNChooseWindow {
-    font-size: 36px;
+    background-color: chocolate;
   }
 }
 
 /* Smartphone o piccoli Tablet */
 @media all and (max-width: 480px) {
   .VNBottomContainer {
+    background-color: crimson;
     top: 0px;
     height: 100vh;
     max-height: 100vh;
@@ -489,11 +499,12 @@ body {
   }
 
   .VNTextWindow {
+    background-color: crimson;
     max-height: 70vh;
-    font-size: 24px;
   }
 
   .VNTextWindowLabel {
+    background-color: blueviolet;
     color: white;
     top: 0px;
     max-width: 100%;
@@ -502,13 +513,14 @@ body {
   }
 
   .VNTextScroller {
+    background-color: aqua;
     margin-top: 4rem;
     height: calc(100% - 2rem);
   }
 
   .VNChooseWindow {
+    background-color: chocolate;
     height: 30vh;
-    font-size: 24px;
   }
 
   .VNTextWindowProceed {
@@ -518,24 +530,5 @@ body {
   .VNMenuButton {
     left: unset;
     right: 0px;
-    font-size: 24px;
   }
-}
-
-/* Styling */
-.ChapterBackground {
-  background-image: linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0.9),
-    rgba(0, 0, 0, 0.5),
-    rgba(0, 0, 0, 0.9)
-  );
-  background-repeat: no-repeat;
-}
-
-.LabelBackground {
-}
-
-.TextStyle {
-  color: rgb(212, 203, 232);
 }

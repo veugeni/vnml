@@ -15,17 +15,6 @@ program
     .description("VNML Visual Novel Markup Language Compiler")
     .version(package_json_1.version);
 program
-    .command("compile")
-    .alias("c")
-    .description("Compiles the source .vnml into a runnable .html file")
-    .argument("<source>", "source file name")
-    .option("--check", "syntax check only")
-    .option("-d, --destination <string>", "sets destination path")
-    .action(function (source, options) {
-    console.log("options", options);
-    compile(source, options, false);
-});
-program
     .command("build")
     .alias("b")
     .description("Builds a distributable pack")
@@ -36,10 +25,10 @@ program
     .option("-p, --port <port>", "sets debug server port (default 8080)")
     .action(function (source, options) {
     console.log("options", options);
-    compile(source, options, true);
+    build(source, options);
 });
 program.parse();
-function compile(source, options, build) {
+function build(source, options) {
     var config = {
         sourceFullPath: source,
         sourcePath: path_1["default"].dirname(source),
@@ -97,13 +86,15 @@ function compile(source, options, build) {
         console.log("Error creating destination path ".concat(config.destPath, ":"), err);
         process.exit(1);
     }
-    if (build && options.clean) {
+    if (options.clean) {
         console.log("Cleaning up output");
         try {
-            var dir = fs_1["default"].readdirSync(config.destPath);
+            var dir = fs_1["default"].readdirSync(config.destPath, { withFileTypes: true });
             dir.forEach(function (e) {
-                console.log("unlink ".concat(e));
-                fs_1["default"].unlinkSync(path_1["default"].join(config.destPath, e));
+                if (e.isFile()) {
+                    console.log("unlink ".concat(e));
+                    fs_1["default"].unlinkSync(path_1["default"].join(config.destPath, e.name));
+                }
             });
         }
         catch (err) {
@@ -118,39 +109,38 @@ function compile(source, options, build) {
         var frame = fs_1["default"].readFileSync("./engine/frame.template", {
             encoding: "utf8"
         });
+        var menu = fs_1["default"].readFileSync("./engine/menu.template", {
+            encoding: "utf8"
+        });
+        var menuResult = menu.replace("$TITLE$", config.title);
         var result = frame.replace("$TITLE$", config.title);
-        if (build) {
-            var rname = Math.random().toString(36).substring(2, 15) +
-                Math.random().toString(23).substring(2, 5);
-            fs_1["default"].copyFileSync("./engine/vnengine.js", path_1["default"].join(config.destPath, "".concat(rname, ".js")));
-            fs_1["default"].copyFileSync("./engine/cssreset.css", path_1["default"].join(config.destPath, "".concat(rname, ".css")));
-            fs_1["default"].copyFileSync("./engine/vncore.css", path_1["default"].join(config.destPath, "".concat(rname, "c.css")));
-            result = result
-                .replace("vnengine.js", "".concat(rname, ".js"))
-                .replace("cssreset.css", "".concat(rname, ".css"))
-                .replace("vncore.css", "".concat(rname, "c.css"));
-        }
+        var rname = Math.random().toString(36).substring(2, 15) +
+            Math.random().toString(23).substring(2, 5);
+        fs_1["default"].copyFileSync("./engine/vnengine.js", path_1["default"].join(config.destPath, "".concat(rname, ".js")));
+        fs_1["default"].copyFileSync("./engine/vncore.css", path_1["default"].join(config.destPath, "".concat(rname, ".css")));
+        result = result
+            .replace("vnengine.js", "".concat(rname, ".js"))
+            .replace("vncore.css", "".concat(rname, ".css"));
+        menuResult = menuResult
+            .replace("vncore.css", "".concat(rname, ".css"))
+            .replace("$DESTINATION$", "./".concat(rname, ".html"));
+        fs_1["default"].writeFileSync(config.destFullPath, menuResult);
         result = result.replace("$ITSAME$", sourceVnml);
-        fs_1["default"].writeFileSync(config.destFullPath, result);
-        if (build) {
-            console.log("Distribution package built in ".concat(config.destPath));
-            if (options.run) {
-                console.log("Running debug server on port ".concat(config.port));
-                console.log("Press CTRL+C to stop it");
-                var p = (0, child_process_1.spawnSync)("http-server", [
-                    config.destPath,
-                    "-o ".concat(config.destFileName, " "),
-                    "-c-1",
-                    "--silent",
-                    "-p".concat(config.port),
-                ], { shell: true });
-                if (p) {
-                    console.log("p:", p);
-                }
+        fs_1["default"].writeFileSync(path_1["default"].join(config.destPath, "".concat(rname, ".html")), result);
+        console.log("Distribution package built in ".concat(config.destPath));
+        if (options.run) {
+            console.log("Running debug server on port ".concat(config.port));
+            console.log("Press CTRL+C to stop it");
+            var p = (0, child_process_1.spawnSync)("http-server", [
+                config.destPath,
+                "-o ".concat(config.destFileName, " "),
+                "-c-1",
+                "--silent",
+                "-p".concat(config.port),
+            ], { shell: true });
+            if (p) {
+                console.log("p:", p);
             }
-        }
-        else {
-            console.log("File compiled successfully in ".concat(config.destFullPath));
         }
         process.exit(0);
     }

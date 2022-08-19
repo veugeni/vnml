@@ -13,18 +13,6 @@ program
   .version(version);
 
 program
-  .command("compile")
-  .alias("c")
-  .description("Compiles the source .vnml into a runnable .html file")
-  .argument("<source>", "source file name")
-  .option("--check", "syntax check only")
-  .option("-d, --destination <string>", "sets destination path")
-  .action((source: string, options: any) => {
-    console.log("options", options);
-    compile(source, options, false);
-  });
-
-program
   .command("build")
   .alias("b")
   .description("Builds a distributable pack")
@@ -35,12 +23,12 @@ program
   .option("-p, --port <port>", "sets debug server port (default 8080)")
   .action((source: string, options: any) => {
     console.log("options", options);
-    compile(source, options, true);
+    build(source, options);
   });
 
 program.parse();
 
-function compile(source: string, options: any, build: boolean) {
+function build(source: string, options: any) {
   const config = {
     sourceFullPath: source,
     sourcePath: path.dirname(source),
@@ -108,15 +96,17 @@ function compile(source: string, options: any, build: boolean) {
     process.exit(1);
   }
 
-  if (build && options.clean) {
+  if (options.clean) {
     console.log("Cleaning up output");
 
     try {
-      const dir = fs.readdirSync(config.destPath);
+      const dir = fs.readdirSync(config.destPath, { withFileTypes: true });
 
       dir.forEach((e) => {
-        console.log(`unlink ${e}`);
-        fs.unlinkSync(path.join(config.destPath, e));
+        if (e.isFile()) {
+          console.log(`unlink ${e}`);
+          fs.unlinkSync(path.join(config.destPath, e.name));
+        }
       });
     } catch (err) {
       console.log("Error cleaning output:", err);
@@ -133,59 +123,59 @@ function compile(source: string, options: any, build: boolean) {
       encoding: "utf8",
     });
 
+    const menu = fs.readFileSync("./engine/menu.template", {
+      encoding: "utf8",
+    });
+
+    let menuResult = menu.replace("$TITLE$", config.title);
     let result = frame.replace("$TITLE$", config.title);
 
-    if (build) {
-      const rname =
-        Math.random().toString(36).substring(2, 15) +
-        Math.random().toString(23).substring(2, 5);
+    const rname =
+      Math.random().toString(36).substring(2, 15) +
+      Math.random().toString(23).substring(2, 5);
 
-      fs.copyFileSync(
-        "./engine/vnengine.js",
-        path.join(config.destPath, `${rname}.js`)
-      );
-      fs.copyFileSync(
-        "./engine/cssreset.css",
-        path.join(config.destPath, `${rname}.css`)
-      );
-      fs.copyFileSync(
-        "./engine/vncore.css",
-        path.join(config.destPath, `${rname}c.css`)
-      );
+    fs.copyFileSync(
+      "./engine/vnengine.js",
+      path.join(config.destPath, `${rname}.js`)
+    );
+    fs.copyFileSync(
+      "./engine/vncore.css",
+      path.join(config.destPath, `${rname}.css`)
+    );
 
-      result = result
-        .replace("vnengine.js", `${rname}.js`)
-        .replace("cssreset.css", `${rname}.css`)
-        .replace("vncore.css", `${rname}c.css`);
-    }
+    result = result
+      .replace("vnengine.js", `${rname}.js`)
+      .replace("vncore.css", `${rname}.css`);
+
+    menuResult = menuResult
+      .replace("vncore.css", `${rname}.css`)
+      .replace("$DESTINATION$", `./${rname}.html`);
+    fs.writeFileSync(config.destFullPath, menuResult);
 
     result = result.replace("$ITSAME$", sourceVnml);
 
-    fs.writeFileSync(config.destFullPath, result);
-    if (build) {
-      console.log(`Distribution package built in ${config.destPath}`);
+    fs.writeFileSync(path.join(config.destPath, `${rname}.html`), result);
 
-      if (options.run) {
-        console.log(`Running debug server on port ${config.port}`);
-        console.log("Press CTRL+C to stop it");
-        const p = spawnSync(
-          "http-server",
-          [
-            config.destPath,
-            `-o ${config.destFileName} `,
-            "-c-1",
-            "--silent",
-            `-p${config.port}`,
-          ],
-          { shell: true }
-        );
+    console.log(`Distribution package built in ${config.destPath}`);
 
-        if (p) {
-          console.log("p:", p);
-        }
+    if (options.run) {
+      console.log(`Running debug server on port ${config.port}`);
+      console.log("Press CTRL+C to stop it");
+      const p = spawnSync(
+        "http-server",
+        [
+          config.destPath,
+          `-o ${config.destFileName} `,
+          "-c-1",
+          "--silent",
+          `-p${config.port}`,
+        ],
+        { shell: true }
+      );
+
+      if (p) {
+        console.log("p:", p);
       }
-    } else {
-      console.log(`File compiled successfully in ${config.destFullPath}`);
     }
 
     process.exit(0);
