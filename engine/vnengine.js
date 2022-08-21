@@ -1,8 +1,9 @@
 const States = {
-    MENU: "MN",
     SEEK_PARAGRAPH: "SP",
+    WRITING: "WR",
     SWITCH_SUBPAGE: "SB",
-    FETCH_CHOICES: "FC",
+    INTERACTION: "IT",
+    CHOOSING: "CH",
 };
 const elements = {
     bg: null,
@@ -34,7 +35,8 @@ const context = {
     twTextIndex: 0,
     isWriting: false,
     writingText: "",
-    choosing: false,
+    choices: [],
+    subPagesEnded: false,
 };
 const Config = {
     typeWriterSpeed: 50,
@@ -70,7 +72,7 @@ function startup() {
         context.saveToken = buildToken(context.title);
         console.log("Playing " + context.title + " by " + context.author);
         console.log("SaveToken: " + context.saveToken);
-        fetchParagraph();
+        step();
     }
     else {
         alert("This is not a VNML page");
@@ -81,14 +83,16 @@ function buildToken(text) {
     return text.replace(special, "_").toLowerCase();
 }
 function nextSubpage() {
+    if (context.lines.length === 1) {
+        console.log("No sub pages");
+        return false;
+    }
     context.subPage++;
     if (context.lines.length > 0 && context.subPage < context.lines.length) {
         console.log("next sub page", context.subPage, context.lines.length);
         typeWriter(context.lines[context.subPage]);
         if (context.subPage === context.lines.length - 1) {
             console.log("Sub pages ended");
-            context.lines = [];
-            context.subPage = 0;
             return false;
         }
         return true;
@@ -165,18 +169,18 @@ function parseSound(e) {
     }
 }
 function moveTo(label) {
-    console.log("moving to label", label);
-    for (let i = 0; i < elements.vn.children.length; i++) {
-        const e = elements.vn.children[i];
-        if (e.tagName === "LB" && e.innerText === label) {
-            setProgramCounter(i + 1);
-            clearCharacters();
-            context.state = "SEEK_PARAGRAPH";
-            fetchParagraph();
-            return;
+    if (label !== "") {
+        for (let i = 0; i < elements.vn.children.length; i++) {
+            const e = elements.vn.children[i];
+            if (e.tagName === "LB" && e.innerText === label) {
+                setProgramCounter(i + 1);
+                clearCharacters();
+                break;
+            }
         }
     }
-    console.log("Label not found");
+    context.state = "SEEK_PARAGRAPH";
+    step();
 }
 function getCurrentToken() {
     if (hasMoreTokens()) {
@@ -199,62 +203,96 @@ function setProgramCounter(position) {
     }
     context.cursor = 0;
 }
-function fetchParagraph() {
-    let fetchNext = true;
-    let token = null;
-    console.log("fetch: " + context.state);
-    if (context.isWriting) {
-        console.log("Resetting typewriter");
-        showAllText();
-        return;
+function hideChoices() {
+    elements.chf.setAttribute("style", "display:none");
+    elements.nx.setAttribute("style", "display:block");
+    context.choices = [];
+}
+function showChoices() {
+    elements.chf.setAttribute("style", "display:block");
+    elements.nx.setAttribute("style", "display:none");
+}
+function render() {
+    elements.ch.innerHTML = "";
+    elements.p.innerHTML = "";
+    context.choices.forEach((e) => {
+        renderChoice(e.text, e.next);
+    });
+    if (context.lines.length > 0) {
+        typeWriter(context.lines[0]);
     }
-    if (context.state === "SWITCH_SUBPAGE") {
-        if (!nextSubpage()) {
-            context.state = "FETCH_CHOICES";
-            console.log("fetch: " + context.state);
-        }
-        else {
+    else {
+        typeWriter("");
+    }
+}
+function step() {
+    console.log("Stepping", context);
+    if (context.state === "WRITING") {
+        if (context.isWriting) {
+            console.log("Skipping typewriter");
+            showAllText();
+            if (context.choices.length > 0 &&
+                (context.subPagesEnded || context.lines.length === 1)) {
+                context.subPagesEnded = false;
+                console.log("has choices");
+                showChoices();
+                context.state = "CHOOSING";
+            }
+            else {
+                console.log("waiting user");
+                context.state = "INTERACTION";
+            }
             return;
         }
     }
+    if (context.state === "INTERACTION") {
+        if (!nextSubpage()) {
+            if (context.choices.length > 0) {
+                console.log("waiting typewriter");
+                context.subPagesEnded = true;
+                context.state = "WRITING";
+            }
+            else {
+                console.log("Seek new paragrpah");
+                context.state = "SEEK_PARAGRAPH";
+            }
+        }
+        else {
+            console.log("has next subpage");
+            context.state = "WRITING";
+            return;
+        }
+    }
+    if (context.state === "SEEK_PARAGRAPH") {
+        hideChoices();
+        fetchParagraph();
+        render();
+        context.state = "WRITING";
+    }
+    if (context.state === "CHOOSING") {
+        console.log("Choosing");
+        // NOP
+    }
+}
+function fetchParagraph() {
+    let fetchNext = true;
+    let token = null;
+    console.log("fetch paragraph: ", context);
+    let paragraphFound = false;
     while (fetchNext && hasMoreTokens()) {
         token = getCurrentToken();
-        console.log("found ", token.tagName);
-        switch (context.state) {
-            case "SEEK_PARAGRAPH":
-                const isParagraph = parse(token);
-                if (isParagraph) {
-                    if (context.lines.length > 1) {
-                        console.log("Multiline paragraph");
-                        context.state = "SWITCH_SUBPAGE";
-                        fetchNext = false;
-                        next();
-                        setProgramCounter();
-                    }
-                    else {
-                        console.log("Single paragraph");
-                        context.state = "FETCH_CHOICES";
-                        next();
-                    }
-                }
-                else {
-                    next();
-                }
-                break;
-            case "FETCH_CHOICES":
-                if (token.tagName === "CH") {
-                    console.log("Found choice");
-                    parse(token);
-                    next();
-                }
-                else {
-                    console.log("Switch to seek paragraph");
-                    context.state = "SEEK_PARAGRAPH";
-                    setProgramCounter();
-                    fetchNext = false;
-                }
-                break;
+        console.log("found token", token.tagName);
+        if (paragraphFound) {
+            if (token.tagName !== "CH") {
+                setProgramCounter();
+                fetchNext = false;
+                return;
+            }
         }
+        const isParagraph = parse(token);
+        if (isParagraph)
+            paragraphFound = true;
+        next();
     }
 }
 function clearCharacters() {
@@ -279,18 +317,8 @@ function setLabel(text) {
     elements.lb.innerHTML = text;
 }
 function setParagraph(text) {
-    elements.ch.innerHTML = "";
-    elements.chf.setAttribute("style", "display:none");
-    elements.nx.setAttribute("style", "display:block");
-    context.choosing = false;
     context.lines = splitInLines(text);
     context.subPage = 0;
-    if (context.lines.length > 0) {
-        typeWriter(context.lines[0]);
-    }
-    else {
-        typeWriter("");
-    }
 }
 function splitInLines(text) {
     const result = [];
@@ -398,9 +426,6 @@ function parseConditionalOperator(e) {
     return result;
 }
 function parseChoice(e) {
-    elements.chf.setAttribute("style", "display:block");
-    elements.nx.setAttribute("style", "display:none");
-    context.choosing = true;
     console.log("scelta", e.innerText);
     const text = collectText(e);
     if (text !== "") {
@@ -409,11 +434,11 @@ function parseChoice(e) {
         if (show) {
             if (gt) {
                 console.log("La scelta ha un goto", gt.innerText);
-                appendChoice(text, gt.innerText);
+                context.choices.push({ text, next: gt.innerText });
             }
             else {
                 console.log("La scelta prosegue");
-                appendChoice(text, "");
+                context.choices.push({ text, next: "" });
             }
         }
         else {
@@ -433,27 +458,15 @@ function seekTag(tag) {
     }
     return undefined;
 }
-function appendChoice(text, next) {
+function renderChoice(text, next) {
     const choice = document.createElement("div");
     choice.className = "VNChooseItem OptionStyle";
     choice.innerHTML = text;
     choice.addEventListener("click", () => {
-        console.log("Cliccato evento");
-        if (next === "")
-            fetchParagraph();
+        console.log("Event clicked " + next === "" ? "goto next paragraph" : "goto " + next);
         moveTo(next);
     });
     elements.ch.appendChild(choice);
-}
-function clickArea(origin) {
-    switch (origin) {
-        case "chapter":
-        case "proceed":
-        case "choose":
-            if (!context.choosing)
-                fetchParagraph();
-            break;
-    }
 }
 function addFrontend() {
     const template = `
@@ -462,15 +475,15 @@ function addFrontend() {
       <div class="VNCharacter VNCAnchorLeft"></div>
       <div class="VNCharacter VNCAnchorMiddle"></div>
       <div class="VNBottomContainer">
-        <div class="VNTextWindow ChapterStyle" onclick="clickArea('chapter')">
+        <div class="VNTextWindow ChapterStyle" onclick="step()">
           <div class="VNTextWindowLabel LabelStyle"></div>
           <div class="VNTextScroller TextStyle"></div>
         </div>
-        <div class="VNChooseWindow ChooseStyle" onclick="clickArea('choose')">
+        <div class="VNChooseWindow ChooseStyle" onclick="step()">
           <div class="VNChooseScroller">            
           </div>
         </div>
-        <div class="VNTextWindowProceed ButtonStyle" onclick="clickArea('proceed')"></div>
+        <div class="VNTextWindowProceed ButtonStyle" onclick="step()"></div>
       </div>
     `;
     const p = document.createElement("div");
@@ -487,6 +500,7 @@ function typeWriter(text) {
     context.isWriting = false;
     elements.p.innerHTML = "";
     context.writingText = "";
+    window.clearInterval(context.typeWriter);
     if (text !== "") {
         context.writingText = text;
         context.typeWriter = window.setInterval(() => {
@@ -496,8 +510,19 @@ function typeWriter(text) {
                 context.isWriting = true;
             }
             else {
+                console.log("Typewriter ended");
                 window.clearInterval(context.typeWriter);
                 context.isWriting = false;
+                if (context.choices.length > 0 &&
+                    context.subPage === context.lines.length - 1) {
+                    console.log("Enabling choices", context);
+                    showChoices();
+                    context.state = "CHOOSING";
+                }
+                else {
+                    console.log("Enabling interaction", context);
+                    context.state = "INTERACTION";
+                }
             }
         }, Config.typeWriterSpeed);
     }

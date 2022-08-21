@@ -104,7 +104,7 @@ function build(source: string, options: any) {
 
       dir.forEach((e) => {
         if (e.isFile()) {
-          console.log(`unlink ${e}`);
+          console.log(`unlink ${e.name}`);
           fs.unlinkSync(path.join(config.destPath, e.name));
         }
       });

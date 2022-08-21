@@ -1,8 +1,9 @@
 const States = {
-  MENU: "MN",
   SEEK_PARAGRAPH: "SP",
+  WRITING: "WR",
   SWITCH_SUBPAGE: "SB",
-  FETCH_CHOICES: "FC",
+  INTERACTION: "IT",
+  CHOOSING: "CH",
 };
 
 type States = keyof typeof States;
@@ -43,6 +44,11 @@ const elements: Elements = {
   vnml: null,
 };
 
+interface Choice {
+  text: string;
+  next: string;
+}
+
 interface Context {
   index: number;
   lines: string[];
@@ -57,7 +63,8 @@ interface Context {
   twTextIndex: number;
   isWriting: boolean;
   writingText: string;
-  choosing: boolean;
+  choices: Choice[];
+  subPagesEnded: boolean;
 }
 
 const context: Context = {
@@ -74,7 +81,8 @@ const context: Context = {
   twTextIndex: 0,
   isWriting: false,
   writingText: "",
-  choosing: false,
+  choices: [],
+  subPagesEnded: false,
 };
 
 const Config = {
@@ -119,7 +127,7 @@ function startup() {
     console.log("Playing " + context.title + " by " + context.author);
     console.log("SaveToken: " + context.saveToken);
 
-    fetchParagraph();
+    step();
   } else {
     alert("This is not a VNML page");
   }
@@ -131,6 +139,11 @@ function buildToken(text: string) {
 }
 
 function nextSubpage() {
+  if (context.lines.length === 1) {
+    console.log("No sub pages");
+    return false;
+  }
+
   context.subPage++;
 
   if (context.lines.length > 0 && context.subPage < context.lines.length) {
@@ -139,8 +152,6 @@ function nextSubpage() {
 
     if (context.subPage === context.lines.length - 1) {
       console.log("Sub pages ended");
-      context.lines = [];
-      context.subPage = 0;
       return false;
     }
 
@@ -222,19 +233,19 @@ function parseSound(e: HTMLElement) {
 }
 
 function moveTo(label: string) {
-  console.log("moving to label", label);
-
-  for (let i = 0; i < elements.vn.children.length; i++) {
-    const e = elements.vn.children[i] as HTMLElement;
-    if (e.tagName === "LB" && e.innerText === label) {
-      setProgramCounter(i + 1);
-      clearCharacters();
-      context.state = "SEEK_PARAGRAPH";
-      fetchParagraph();
-      return;
+  if (label !== "") {
+    for (let i = 0; i < elements.vn.children.length; i++) {
+      const e = elements.vn.children[i] as HTMLElement;
+      if (e.tagName === "LB" && e.innerText === label) {
+        setProgramCounter(i + 1);
+        clearCharacters();
+        break;
+      }
     }
   }
-  console.log("Label not found");
+
+  context.state = "SEEK_PARAGRAPH";
+  step();
 }
 
 function getCurrentToken() {
@@ -261,64 +272,112 @@ function setProgramCounter(position?: number) {
   context.cursor = 0;
 }
 
-function fetchParagraph() {
-  let fetchNext = true;
-  let token = null;
+function hideChoices() {
+  elements.chf.setAttribute("style", "display:none");
+  elements.nx.setAttribute("style", "display:block");
+  context.choices = [];
+}
 
-  console.log("fetch: " + context.state);
+function showChoices() {
+  elements.chf.setAttribute("style", "display:block");
+  elements.nx.setAttribute("style", "display:none");
+}
 
-  if (context.isWriting) {
-    console.log("Resetting typewriter");
-    showAllText();
-    return;
+function render() {
+  elements.ch.innerHTML = "";
+  elements.p.innerHTML = "";
+
+  context.choices.forEach((e) => {
+    renderChoice(e.text, e.next);
+  });
+
+  if (context.lines.length > 0) {
+    typeWriter(context.lines[0]);
+  } else {
+    typeWriter("");
   }
+}
 
-  if (context.state === "SWITCH_SUBPAGE") {
-    if (!nextSubpage()) {
-      context.state = "FETCH_CHOICES";
-      console.log("fetch: " + context.state);
-    } else {
+function step() {
+  console.log("Stepping", context);
+
+  if (context.state === "WRITING") {
+    if (context.isWriting) {
+      console.log("Skipping typewriter");
+      showAllText();
+
+      if (
+        context.choices.length > 0 &&
+        (context.subPagesEnded || context.lines.length === 1)
+      ) {
+        context.subPagesEnded = false;
+        console.log("has choices");
+        showChoices();
+        context.state = "CHOOSING";
+      } else {
+        console.log("waiting user");
+        context.state = "INTERACTION";
+      }
+
       return;
     }
   }
 
+  if (context.state === "INTERACTION") {
+    if (!nextSubpage()) {
+      if (context.choices.length > 0) {
+        console.log("waiting typewriter");
+        context.subPagesEnded = true;
+        context.state = "WRITING";
+      } else {
+        console.log("Seek new paragrpah");
+        context.state = "SEEK_PARAGRAPH";
+      }
+    } else {
+      console.log("has next subpage");
+      context.state = "WRITING";
+      return;
+    }
+  }
+
+  if (context.state === "SEEK_PARAGRAPH") {
+    hideChoices();
+    fetchParagraph();
+    render();
+
+    context.state = "WRITING";
+  }
+
+  if (context.state === "CHOOSING") {
+    console.log("Choosing");
+    // NOP
+  }
+}
+
+function fetchParagraph() {
+  let fetchNext = true;
+  let token = null;
+
+  console.log("fetch paragraph: ", context);
+
+  let paragraphFound = false;
+
   while (fetchNext && hasMoreTokens()) {
     token = getCurrentToken();
-    console.log("found ", token.tagName);
+    console.log("found token", token.tagName);
 
-    switch (context.state) {
-      case "SEEK_PARAGRAPH":
-        const isParagraph = parse(token);
-
-        if (isParagraph) {
-          if (context.lines.length > 1) {
-            console.log("Multiline paragraph");
-            context.state = "SWITCH_SUBPAGE";
-            fetchNext = false;
-            next();
-            setProgramCounter();
-          } else {
-            console.log("Single paragraph");
-            context.state = "FETCH_CHOICES";
-            next();
-          }
-        } else {
-          next();
-        }
-        break;
-      case "FETCH_CHOICES":
-        if (token.tagName === "CH") {
-          console.log("Found choice");
-          parse(token);
-          next();
-        } else {
-          console.log("Switch to seek paragraph");
-          context.state = "SEEK_PARAGRAPH";
-          setProgramCounter();
-          fetchNext = false;
-        }
-        break;
+    if (paragraphFound) {
+      if (token.tagName !== "CH") {
+        setProgramCounter();
+        fetchNext = false;
+        return;
+      }
     }
+
+    const isParagraph = parse(token);
+    if (isParagraph) paragraphFound = true;
+
+    next();
   }
 }
 
@@ -351,19 +410,8 @@ function setLabel(text: string) {
 }
 
 function setParagraph(text: string) {
-  elements.ch.innerHTML = "";
-  elements.chf.setAttribute("style", "display:none");
-  elements.nx.setAttribute("style", "display:block");
-
-  context.choosing = false;
   context.lines = splitInLines(text);
   context.subPage = 0;
-
-  if (context.lines.length > 0) {
-    typeWriter(context.lines[0]);
-  } else {
-    typeWriter("");
-  }
 }
 
 function splitInLines(text: string) {
@@ -499,10 +547,6 @@ function parseConditionalOperator(e: HTMLElement) {
 }
 
 function parseChoice(e: HTMLElement) {
-  elements.chf.setAttribute("style", "display:block");
-  elements.nx.setAttribute("style", "display:none");
-  context.choosing = true;
-
   console.log("scelta", e.innerText);
 
   const text = collectText(e);
@@ -514,10 +558,10 @@ function parseChoice(e: HTMLElement) {
     if (show) {
       if (gt) {
         console.log("La scelta ha un goto", gt.innerText);
-        appendChoice(text, gt.innerText);
+        context.choices.push({ text, next: gt.innerText });
       } else {
         console.log("La scelta prosegue");
-        appendChoice(text, "");
+        context.choices.push({ text, next: "" });
       }
     } else {
       console.log("La scelta viene nascosta");
@@ -540,27 +584,18 @@ function seekTag(tag: string) {
   return undefined;
 }
 
-function appendChoice(text: string, next: string) {
+function renderChoice(text: string, next: string) {
   const choice = document.createElement("div");
   choice.className = "VNChooseItem OptionStyle";
   choice.innerHTML = text;
   choice.addEventListener("click", () => {
-    console.log("Cliccato evento");
-    if (next === "") fetchParagraph();
+    console.log(
+      "Event clicked " + next === "" ? "goto next paragraph" : "goto " + next
+    );
     moveTo(next);
   });
 
   elements.ch.appendChild(choice);
-}
-
-function clickArea(origin: string) {
-  switch (origin) {
-    case "chapter":
-    case "proceed":
-    case "choose":
-      if (!context.choosing) fetchParagraph();
-      break;
-  }
 }
 
 function addFrontend() {
@@ -570,15 +605,15 @@ function addFrontend() {
       <div class="VNCharacter VNCAnchorLeft"></div>
       <div class="VNCharacter VNCAnchorMiddle"></div>
       <div class="VNBottomContainer">
-        <div class="VNTextWindow ChapterStyle" onclick="clickArea('chapter')">
+        <div class="VNTextWindow ChapterStyle" onclick="step()">
           <div class="VNTextWindowLabel LabelStyle"></div>
           <div class="VNTextScroller TextStyle"></div>
         </div>
-        <div class="VNChooseWindow ChooseStyle" onclick="clickArea('choose')">
+        <div class="VNChooseWindow ChooseStyle" onclick="step()">
           <div class="VNChooseScroller">            
           </div>
         </div>
-        <div class="VNTextWindowProceed ButtonStyle" onclick="clickArea('proceed')"></div>
+        <div class="VNTextWindowProceed ButtonStyle" onclick="step()"></div>
       </div>
     `;
 
@@ -601,6 +636,8 @@ function typeWriter(text: string) {
   elements.p.innerHTML = "";
   context.writingText = "";
 
+  window.clearInterval(context.typeWriter);
+
   if (text !== "") {
     context.writingText = text;
     context.typeWriter = window.setInterval(() => {
@@ -609,8 +646,20 @@ function typeWriter(text: string) {
         context.twTextIndex++;
         context.isWriting = true;
       } else {
+        console.log("Typewriter ended");
         window.clearInterval(context.typeWriter);
         context.isWriting = false;
+        if (
+          context.choices.length > 0 &&
+          context.subPage === context.lines.length - 1
+        ) {
+          console.log("Enabling choices", context);
+          showChoices();
+          context.state = "CHOOSING";
+        } else {
+          console.log("Enabling interaction", context);
+          context.state = "INTERACTION";
+        }
       }
     }, Config.typeWriterSpeed);
   }

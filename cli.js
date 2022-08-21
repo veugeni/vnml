@@ -92,7 +92,7 @@ function build(source, options) {
             var dir = fs_1["default"].readdirSync(config.destPath, { withFileTypes: true });
             dir.forEach(function (e) {
                 if (e.isFile()) {
-                    console.log("unlink ".concat(e));
+                    console.log("unlink ".concat(e.name));
                     fs_1["default"].unlinkSync(path_1["default"].join(config.destPath, e.name));
                 }
             });
