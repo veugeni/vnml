@@ -215,6 +215,7 @@ function showChoices() {
 function render() {
     elements.ch.innerHTML = "";
     elements.p.innerHTML = "";
+    context.subPagesEnded = false;
     context.choices.forEach((e) => {
         renderChoice(e.text, e.next);
     });
@@ -232,8 +233,7 @@ function step() {
             console.log("Skipping typewriter");
             showAllText();
             if (context.choices.length > 0 &&
-                (context.subPagesEnded || context.lines.length === 1)) {
-                context.subPagesEnded = false;
+                (context.subPagesEnded || context.lines.length <= 1)) {
                 console.log("has choices");
                 showChoices();
                 context.state = "CHOOSING";
@@ -246,21 +246,24 @@ function step() {
         }
     }
     if (context.state === "INTERACTION") {
-        if (!nextSubpage()) {
-            if (context.choices.length > 0) {
-                console.log("waiting typewriter");
-                context.subPagesEnded = true;
-                context.state = "WRITING";
-            }
-            else {
-                console.log("Seek new paragrpah");
-                context.state = "SEEK_PARAGRAPH";
-            }
+        nextSubpage();
+        if (context.lines.length <= 1) {
+            console.log("Single paragraph, seeking next");
+            context.state = "SEEK_PARAGRAPH";
+            context.subPagesEnded = true;
+        }
+        else if (context.subPage === context.lines.length - 1) {
+            console.log("Last sub page");
+            context.subPagesEnded = true;
+            context.state = "WRITING";
+        }
+        else if (context.subPage >= context.lines.length) {
+            console.log("Last sub page clicked");
+            context.state = "SEEK_PARAGRAPH";
         }
         else {
             console.log("has next subpage");
             context.state = "WRITING";
-            return;
         }
     }
     if (context.state === "SEEK_PARAGRAPH") {
