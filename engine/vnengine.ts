@@ -93,8 +93,8 @@ const context: Context = {
 
 const Config = {
   typeWriterSpeed: 50,
-  paragraphLimit: window.screen.width <= 480 ? 200 : 300,
-  hiddenChoices: window.screen.width <= 480,
+  paragraphLimit: window.screen.width <= 736 ? 200 : 300,
+  hiddenChoices: window.screen.width <= 736,
   version: "1.0",
 };
 

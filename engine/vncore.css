@@ -435,26 +435,8 @@ body {
   }
 }
 
-/* Tablet in modalità verticale */
-@media all and (min-width: 481px) and (max-width: 736px) {
-  .VNBottomContainer {
-    height: 50vh;
-  }
-  .VNTextWindow {
-    font-size: 36px;
-  }
-  .VNChooseWindow {
-    font-size: 24px;
-  }
-
-  .VNTextWindowLabel {
-    font-size: 36px;
-    font-weight: bold;
-  }
-}
-
-/* Smartphone o piccoli Tablet */
-@media all and (max-width: 480px) {
+/* Smartphone o Tablet verticali */
+@media all and (max-width: 736px) {
   .VNBottomContainer {
     bottom: 0px;
     flex-direction: column;
@@ -504,6 +486,27 @@ body {
 }
 
 /* Styling */
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #8f54a0 transparent;
+}
+
+/* Chrome, Edge, and Safari */
+*::-webkit-scrollbar {
+  width: 12px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: #8f54a0;
+  border-radius: 10px;
+  border: 3px solid transparent;
+}
+
 .ChapterStyle,
 .ChooseStyle {
   background-image: linear-gradient(
