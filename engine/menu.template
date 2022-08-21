@@ -12,6 +12,10 @@
   </head>
 
   <body>
-    <p style="display:block; color:white; cursor: pointer" onclick="window.open('$DESTINATION$','_self')">CLICK ME: SONO UN MENU!</p>
+    <p style="display:block; color:white;">SONO UN MENU!</p>
+    <p></p>
+    <p style="display:block; color:white; cursor: pointer" onclick="window.open('$DESTINATION$?s=0','_self')">SLOT 1</p>
+    <p style="display:block; color:white; cursor: pointer" onclick="window.open('$DESTINATION$?s=1','_self')">SLOT 2</p>
+    <p style="display:block; color:white; cursor: pointer" onclick="window.open('$DESTINATION$?s=2','_self')">SLOT 3</p>
   </body>
 </html>

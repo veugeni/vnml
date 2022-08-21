@@ -67,6 +67,8 @@ interface Context {
   writingText: string;
   choices: Choice[];
   subPagesEnded: boolean;
+  toBeSaved: Slot | null;
+  slot: number;
 }
 
 const context: Context = {
@@ -85,6 +87,8 @@ const context: Context = {
   writingText: "",
   choices: [],
   subPagesEnded: false,
+  toBeSaved: null,
+  slot: 0,
 };
 
 const Config = {
@@ -102,6 +106,19 @@ function vnml() {
 
 function startup() {
   const vn = document.querySelector<HTMLElement>("vn");
+
+  console.log("Building empty save bundle");
+  context.toBeSaved = {
+    bgm: "",
+    bk: "",
+    cl: "",
+    cm: "",
+    cr: "",
+    date: "",
+    label: "",
+    index: 0,
+    variables: {},
+  };
 
   console.log("vn", vn?.children.length);
 
@@ -129,6 +146,13 @@ function startup() {
 
     console.log("Playing " + context.title + " by " + context.author);
     console.log("SaveToken: " + context.saveToken);
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.has("s")) {
+      context.slot = parseInt(params.get("s"));
+      console.log("Load from slot " + context.slot);
+      load(context.slot);
+    }
 
     step();
   } else {
@@ -166,7 +190,7 @@ function parse(e: HTMLElement) {
   if (e) {
     switch (e.tagName) {
       case "BK":
-        setBackground(e);
+        parseBackground(e);
         return false;
       case "BGM":
       case "SFX":
@@ -218,12 +242,7 @@ function parse(e: HTMLElement) {
 function parseSound(e: HTMLElement) {
   if (e.tagName === "BGM") {
     console.log("Cambio musica di fondo", e.innerText);
-    elements.ms.pause();
-    elements.ms.currentTime = 0;
-    if (e.innerText !== "") {
-      elements.ms.src = e.innerText;
-      elements.ms.play();
-    }
+    setBackgroundMusic(e.innerText);
   } else {
     console.log("Cambio effetto", e.innerText);
     elements.sd.pause();
@@ -232,6 +251,16 @@ function parseSound(e: HTMLElement) {
       elements.sd.src = e.innerText;
       elements.sd.play();
     }
+  }
+}
+
+function setBackgroundMusic(url: string) {
+  elements.ms.pause();
+  elements.ms.currentTime = 0;
+  if (url !== "") {
+    elements.ms.src = url;
+    elements.ms.play();
+    context.toBeSaved.bgm = url;
   }
 }
 
@@ -358,6 +387,7 @@ function step() {
     hideChoices();
     fetchParagraph();
     render();
+    save(0);
 
     context.state = "WRITING";
   }
@@ -373,6 +403,10 @@ function fetchParagraph() {
   let token = null;
 
   console.log("fetch paragraph: ", context);
+
+  context.toBeSaved.date = new Date().toISOString();
+  context.toBeSaved.index = context.index;
+  context.toBeSaved.variables = { ...context.variables };
 
   let paragraphFound = false;
 
@@ -400,27 +434,39 @@ function clearCharacters() {
   elements.cm.setAttribute("style", `background-image:none`);
   elements.cr.setAttribute("style", `background-image:none`);
   setLabel("");
+  context.toBeSaved.cr = "";
+  context.toBeSaved.cm = "";
+  context.toBeSaved.cl = "";
+  context.toBeSaved.label = "";
 }
 
-function setBackground(e: HTMLElement) {
+function parseBackground(e: HTMLElement) {
   if (e.children.length === 1) {
     const back = seekTag(e.children[0].tagName);
     if (back) {
-      elements.bg.setAttribute(
-        "style",
-        `background-image:url(${
-          back.querySelector<HTMLElement>("bk").innerText
-        })`
-      );
+      setBackground(back.querySelector<HTMLElement>("bk").innerText);
     }
   } else {
-    elements.bg.setAttribute("style", `background-image:url(${e.innerText})`);
+    setBackground(e.innerText);
   }
+}
+
+function setBackground(url: string) {
+  elements.bg.setAttribute(
+    "style",
+    url === "" ? "none" : `background-image:url(${url})`
+  );
+  context.toBeSaved.bk = url;
 }
 
 function setLabel(text: string) {
   console.log("label settata", text);
   elements.lb.innerHTML = text;
+  context.toBeSaved.label = text;
+  elements.lb.setAttribute(
+    "style",
+    `display:${text === "" ? "none" : "block"}`
+  );
 }
 
 function setParagraph(text: string) {
@@ -498,18 +544,20 @@ function parseCharacter(e: HTMLElement, w: "cl" | "cm" | "cr") {
   if (e.children.length === 1) {
     const character = seekTag(e.children[0].tagName);
     if (character) {
-      elements[w].setAttribute(
-        "style",
-        `background-image:url(${
-          character.querySelector<HTMLElement>("bk").innerText
-        })`
-      );
-
+      setCharacter(character.querySelector<HTMLElement>("bk").innerText, w);
       setLabel(character.querySelector<HTMLElement>("nm").innerText);
     }
   } else {
-    elements[w].setAttribute("style", `background-image:url(${e.innerText})`);
+    setCharacter(e.innerText, w);
   }
+}
+
+function setCharacter(url: string, w: "cl" | "cm" | "cr") {
+  elements[w].setAttribute(
+    "style",
+    url === "" ? "none" : `background-image:url(${url})`
+  );
+  context.toBeSaved[w] = url;
 }
 
 function collectText(e: HTMLElement) {
@@ -683,4 +731,66 @@ function showAllText() {
   window.clearInterval(context.typeWriter);
   context.isWriting = false;
   elements.p.innerHTML = context.writingText;
+}
+
+interface Slot {
+  bk: string;
+  cr: string;
+  cm: string;
+  cl: string;
+  bgm: string;
+  date: string;
+  label: string;
+  variables: any;
+  index: number;
+}
+
+interface Serialized {
+  title: string;
+  slots: Slot[];
+}
+
+function save(slot: number) {
+  if (context.toBeSaved) {
+    try {
+      const raw = localStorage.getItem(context.saveToken);
+      const read: Serialized = JSON.parse(raw);
+      const updated: Serialized = read
+        ? { ...read }
+        : { title: context.title, slots: [] };
+
+      updated.slots[slot] = { ...context.toBeSaved };
+
+      localStorage.setItem(context.saveToken, JSON.stringify(updated));
+      console.log("In game save ", updated);
+    } catch (err) {
+      console.log("Error in saving: ", err);
+    }
+  } else {
+    console.log("Nothing to save");
+  }
+}
+
+function load(slot: number) {
+  try {
+    const raw = localStorage.getItem(context.saveToken);
+    const read: Serialized = JSON.parse(raw);
+
+    if (read && slot >= 0 && slot < read.slots.length) {
+      const data = read.slots[slot];
+      console.log("Slot loaded", data);
+      setBackgroundMusic(data.bgm);
+      setBackground(data.bk);
+      setCharacter(data.cr, "cr");
+      setCharacter(data.cm, "cm");
+      setCharacter(data.cl, "cl");
+      setLabel(data.label);
+      context.variables = { ...data.variables };
+      context.index = data.index;
+    } else {
+      console.log("Nothing to load");
+    }
+  } catch (err) {
+    console.log("Error in saving: ", err);
+  }
 }

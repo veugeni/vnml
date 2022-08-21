@@ -38,6 +38,8 @@ const context = {
     writingText: "",
     choices: [],
     subPagesEnded: false,
+    toBeSaved: null,
+    slot: 0,
 };
 const Config = {
     typeWriterSpeed: 50,
@@ -53,6 +55,18 @@ function vnml() {
 function startup() {
     var _a, _b;
     const vn = document.querySelector("vn");
+    console.log("Building empty save bundle");
+    context.toBeSaved = {
+        bgm: "",
+        bk: "",
+        cl: "",
+        cm: "",
+        cr: "",
+        date: "",
+        label: "",
+        index: 0,
+        variables: {},
+    };
     console.log("vn", vn === null || vn === void 0 ? void 0 : vn.children.length);
     if (vn) {
         elements.vn = vn;
@@ -75,6 +89,12 @@ function startup() {
         context.saveToken = buildToken(context.title);
         console.log("Playing " + context.title + " by " + context.author);
         console.log("SaveToken: " + context.saveToken);
+        const params = new URLSearchParams(window.location.search);
+        if (params.has("s")) {
+            context.slot = parseInt(params.get("s"));
+            console.log("Load from slot " + context.slot);
+            load(context.slot);
+        }
         step();
     }
     else {
@@ -105,7 +125,7 @@ function parse(e) {
     if (e) {
         switch (e.tagName) {
             case "BK":
-                setBackground(e);
+                parseBackground(e);
                 return false;
             case "BGM":
             case "SFX":
@@ -154,12 +174,7 @@ function parse(e) {
 function parseSound(e) {
     if (e.tagName === "BGM") {
         console.log("Cambio musica di fondo", e.innerText);
-        elements.ms.pause();
-        elements.ms.currentTime = 0;
-        if (e.innerText !== "") {
-            elements.ms.src = e.innerText;
-            elements.ms.play();
-        }
+        setBackgroundMusic(e.innerText);
     }
     else {
         console.log("Cambio effetto", e.innerText);
@@ -169,6 +184,15 @@ function parseSound(e) {
             elements.sd.src = e.innerText;
             elements.sd.play();
         }
+    }
+}
+function setBackgroundMusic(url) {
+    elements.ms.pause();
+    elements.ms.currentTime = 0;
+    if (url !== "") {
+        elements.ms.src = url;
+        elements.ms.play();
+        context.toBeSaved.bgm = url;
     }
 }
 function moveTo(label) {
@@ -279,6 +303,7 @@ function step() {
         hideChoices();
         fetchParagraph();
         render();
+        save(0);
         context.state = "WRITING";
     }
     if (context.state === "CHOOSING") {
@@ -290,6 +315,9 @@ function fetchParagraph() {
     let fetchNext = true;
     let token = null;
     console.log("fetch paragraph: ", context);
+    context.toBeSaved.date = new Date().toISOString();
+    context.toBeSaved.index = context.index;
+    context.toBeSaved.variables = Object.assign({}, context.variables);
     let paragraphFound = false;
     while (fetchNext && hasMoreTokens()) {
         token = getCurrentToken();
@@ -312,21 +340,31 @@ function clearCharacters() {
     elements.cm.setAttribute("style", `background-image:none`);
     elements.cr.setAttribute("style", `background-image:none`);
     setLabel("");
+    context.toBeSaved.cr = "";
+    context.toBeSaved.cm = "";
+    context.toBeSaved.cl = "";
+    context.toBeSaved.label = "";
 }
-function setBackground(e) {
+function parseBackground(e) {
     if (e.children.length === 1) {
         const back = seekTag(e.children[0].tagName);
         if (back) {
-            elements.bg.setAttribute("style", `background-image:url(${back.querySelector("bk").innerText})`);
+            setBackground(back.querySelector("bk").innerText);
         }
     }
     else {
-        elements.bg.setAttribute("style", `background-image:url(${e.innerText})`);
+        setBackground(e.innerText);
     }
+}
+function setBackground(url) {
+    elements.bg.setAttribute("style", url === "" ? "none" : `background-image:url(${url})`);
+    context.toBeSaved.bk = url;
 }
 function setLabel(text) {
     console.log("label settata", text);
     elements.lb.innerHTML = text;
+    context.toBeSaved.label = text;
+    elements.lb.setAttribute("style", `display:${text === "" ? "none" : "block"}`);
 }
 function setParagraph(text) {
     context.lines = splitInLines(text);
@@ -390,13 +428,17 @@ function parseCharacter(e, w) {
     if (e.children.length === 1) {
         const character = seekTag(e.children[0].tagName);
         if (character) {
-            elements[w].setAttribute("style", `background-image:url(${character.querySelector("bk").innerText})`);
+            setCharacter(character.querySelector("bk").innerText, w);
             setLabel(character.querySelector("nm").innerText);
         }
     }
     else {
-        elements[w].setAttribute("style", `background-image:url(${e.innerText})`);
+        setCharacter(e.innerText, w);
     }
+}
+function setCharacter(url, w) {
+    elements[w].setAttribute("style", url === "" ? "none" : `background-image:url(${url})`);
+    context.toBeSaved[w] = url;
 }
 function collectText(e) {
     let buffer = "";
@@ -543,4 +585,47 @@ function showAllText() {
     window.clearInterval(context.typeWriter);
     context.isWriting = false;
     elements.p.innerHTML = context.writingText;
+}
+function save(slot) {
+    if (context.toBeSaved) {
+        try {
+            const raw = localStorage.getItem(context.saveToken);
+            const read = JSON.parse(raw);
+            const updated = read
+                ? Object.assign({}, read) : { title: context.title, slots: [] };
+            updated.slots[slot] = Object.assign({}, context.toBeSaved);
+            localStorage.setItem(context.saveToken, JSON.stringify(updated));
+            console.log("In game save ", updated);
+        }
+        catch (err) {
+            console.log("Error in saving: ", err);
+        }
+    }
+    else {
+        console.log("Nothing to save");
+    }
+}
+function load(slot) {
+    try {
+        const raw = localStorage.getItem(context.saveToken);
+        const read = JSON.parse(raw);
+        if (read && slot >= 0 && slot < read.slots.length) {
+            const data = read.slots[slot];
+            console.log("Slot loaded", data);
+            setBackgroundMusic(data.bgm);
+            setBackground(data.bk);
+            setCharacter(data.cr, "cr");
+            setCharacter(data.cm, "cm");
+            setCharacter(data.cl, "cl");
+            setLabel(data.label);
+            context.variables = Object.assign({}, data.variables);
+            context.index = data.index;
+        }
+        else {
+            console.log("Nothing to load");
+        }
+    }
+    catch (err) {
+        console.log("Error in saving: ", err);
+    }
 }

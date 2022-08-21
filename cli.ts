@@ -147,8 +147,11 @@ function build(source: string, options: any) {
       .replace("vnengine.js", `${rname}.js`)
       .replace("vncore.css", `${rname}.css`);
 
+    // TODO: A better solution for this!
     menuResult = menuResult
       .replace("vncore.css", `${rname}.css`)
+      .replace("$DESTINATION$", `./${rname}.html`)
+      .replace("$DESTINATION$", `./${rname}.html`)
       .replace("$DESTINATION$", `./${rname}.html`);
     fs.writeFileSync(config.destFullPath, menuResult);
 

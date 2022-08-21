@@ -121,8 +121,11 @@ function build(source, options) {
         result = result
             .replace("vnengine.js", "".concat(rname, ".js"))
             .replace("vncore.css", "".concat(rname, ".css"));
+        // TODO: A better solution for this!
         menuResult = menuResult
             .replace("vncore.css", "".concat(rname, ".css"))
+            .replace("$DESTINATION$", "./".concat(rname, ".html"))
+            .replace("$DESTINATION$", "./".concat(rname, ".html"))
             .replace("$DESTINATION$", "./".concat(rname, ".html"));
         fs_1["default"].writeFileSync(config.destFullPath, menuResult);
         result = result.replace("$ITSAME$", sourceVnml);
