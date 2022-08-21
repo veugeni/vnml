@@ -16,6 +16,7 @@ const elements = {
     lb: null,
     ch: null,
     chf: null,
+    chfc: null,
     nx: null,
     ms: null,
     sd: null,
@@ -40,11 +41,12 @@ const context = {
 };
 const Config = {
     typeWriterSpeed: 50,
+    paragraphLimit: window.screen.width <= 480 ? 200 : 300,
+    hiddenChoices: window.screen.width <= 480,
+    version: "1.0",
 };
-const paragraphLimit = 300;
-const version = "1.0";
 function vnml() {
-    console.log(`VNML version ${version}`);
+    console.log(`VNML version ${Config.version}`);
     addFrontend();
     startup();
 }
@@ -63,6 +65,7 @@ function startup() {
         elements.lb = document.querySelector(".VNTextWindowLabel");
         elements.ch = document.querySelector(".VNChooseScroller");
         elements.chf = document.querySelector(".VNChooseScroller");
+        elements.chfc = document.querySelector(".VNChooseWindow");
         elements.nx = document.querySelector(".VNTextWindowProceed");
         context.index = 0;
         const title = (_a = elements.vnd) === null || _a === void 0 ? void 0 : _a.querySelector("st");
@@ -206,11 +209,17 @@ function setProgramCounter(position) {
 function hideChoices() {
     elements.chf.setAttribute("style", "display:none");
     elements.nx.setAttribute("style", "display:block");
+    if (Config.hiddenChoices) {
+        elements.chfc.setAttribute("style", "display:none");
+    }
     context.choices = [];
 }
 function showChoices() {
     elements.chf.setAttribute("style", "display:block");
     elements.nx.setAttribute("style", "display:none");
+    if (Config.hiddenChoices) {
+        elements.chfc.setAttribute("style", "display:block");
+    }
 }
 function render() {
     elements.ch.innerHTML = "";
@@ -328,7 +337,7 @@ function splitInLines(text) {
     let buffer = "";
     for (let i = 0; i < text.length; i++) {
         buffer += text[i];
-        if (buffer.length >= paragraphLimit) {
+        if (buffer.length >= Config.paragraphLimit) {
             const rest = splitToPunctuation(buffer);
             result.push(rest);
             const diff = buffer.length - rest.length;
@@ -478,11 +487,11 @@ function addFrontend() {
       <div class="VNCharacter VNCAnchorLeft"></div>
       <div class="VNCharacter VNCAnchorMiddle"></div>
       <div class="VNBottomContainer">
-        <div class="VNTextWindow ChapterStyle" onclick="step()">
-          <div class="VNTextWindowLabel LabelStyle"></div>
-          <div class="VNTextScroller TextStyle"></div>
+        <div class="VNTextWindow disable-select ChapterStyle" onclick="step()">
+          <div class="VNTextWindowLabel disable-select LabelStyle"></div>
+          <div class="VNTextScroller disable-select TextStyle"></div>
         </div>
-        <div class="VNChooseWindow ChooseStyle" onclick="step()">
+        <div class="VNChooseWindow disable-select ChooseStyle" onclick="step()">
           <div class="VNChooseScroller">            
           </div>
         </div>

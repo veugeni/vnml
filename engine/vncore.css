@@ -133,8 +133,16 @@ showifnonzero {
 
 body {
   font-family: "Inconsolata", monospace;
-  font-size: 48px;
+  font-size: 36px;
   background-color: black;
+}
+
+.disable-select {
+  user-select: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .VNApp {
@@ -191,9 +199,9 @@ body {
 
 .VNTextWindowLabel {
   color: white;
-  font-size: medium;
+  font-size: 48px;
   position: absolute;
-  top: -2rem;
+  top: -3rem;
   max-width: 25%;
   min-width: 200px;
   padding: 1rem;
@@ -373,11 +381,16 @@ body {
 
   .VNTextWindow {
     min-width: 60vw;
-    font-size: 48px;
+    font-size: 36px;
   }
 
   .VNChooseWindow {
     font-size: 24px;
+  }
+
+  .VNTextWindowLabel {
+    font-size: 48px;
+    font-weight: bold;
   }
 }
 
@@ -395,6 +408,11 @@ body {
   .VNChooseWindow {
     font-size: 24px;
   }
+
+  .VNTextWindowLabel {
+    font-size: 36px;
+    font-weight: bold;
+  }
 }
 
 /* Tablet in modalità orizzontale */
@@ -410,6 +428,11 @@ body {
   .VNChooseWindow {
     font-size: 24px;
   }
+
+  .VNTextWindowLabel {
+    font-size: 36px;
+    font-weight: bold;
+  }
 }
 
 /* Tablet in modalità verticale */
@@ -423,20 +446,28 @@ body {
   .VNChooseWindow {
     font-size: 24px;
   }
+
+  .VNTextWindowLabel {
+    font-size: 36px;
+    font-weight: bold;
+  }
 }
 
 /* Smartphone o piccoli Tablet */
 @media all and (max-width: 480px) {
   .VNBottomContainer {
-    top: 0px;
-    height: 100vh;
-    max-height: 100vh;
+    bottom: 0px;
     flex-direction: column;
+    height: 60vh;
+    justify-content: flex-end;
+    transition-duration: 1s;
   }
 
   .VNTextWindow {
-    max-height: 70vh;
-    font-size: 24px;
+    max-height: 40vh;
+    min-height: 40vh;
+    font-size: 22px;
+    transition-duration: 1s;
   }
 
   .VNTextWindowLabel {
@@ -445,6 +476,7 @@ body {
     max-width: 100%;
     width: calc(100% - 2rem);
     padding: 1rem;
+    font-size: 24px;
   }
 
   .VNTextScroller {
@@ -453,8 +485,11 @@ body {
   }
 
   .VNChooseWindow {
-    height: 30vh;
-    font-size: 16px;
+    height: 35vh;
+    font-size: 20px;
+    display: none;
+    transition-duration: 1s;
+    z-index: 600;
   }
 
   .VNTextWindowProceed {
@@ -489,14 +524,15 @@ body {
 }
 
 .LabelStyle {
+  color: rgb(121, 148, 169);
 }
 
 .TextStyle {
-  color: rgb(212, 203, 232);
+  color: rgb(121, 148, 169);
 }
 
 .OptionStyle {
-  color: gray;
+  color: rgb(121, 148, 169);
 }
 
 .OptionStyle:hover {
