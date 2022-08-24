@@ -10,6 +10,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@300&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="vncore.css" />
     <script src="vnengine.js"></script>
+    <script>
+      function exit() {
+        window.location.href="$EXITURL$";
+      }
+    </script>
   </head>
 
   <body onload="vnml()">

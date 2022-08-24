@@ -128,7 +128,9 @@ function build(source, options) {
             .replace("$DESTINATION$", "./".concat(rname, ".html"))
             .replace("$DESTINATION$", "./".concat(rname, ".html"));
         fs_1["default"].writeFileSync(config.destFullPath, menuResult);
-        result = result.replace("$ITSAME$", sourceVnml);
+        result = result
+            .replace("$ITSAME$", sourceVnml)
+            .replace("$EXITURL$", config.destFileName);
         fs_1["default"].writeFileSync(path_1["default"].join(config.destPath, "".concat(rname, ".html")), result);
         console.log("Distribution package built in ".concat(config.destPath));
         if (options.run) {

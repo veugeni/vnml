@@ -155,7 +155,9 @@ function build(source: string, options: any) {
       .replace("$DESTINATION$", `./${rname}.html`);
     fs.writeFileSync(config.destFullPath, menuResult);
 
-    result = result.replace("$ITSAME$", sourceVnml);
+    result = result
+      .replace("$ITSAME$", sourceVnml)
+      .replace("$EXITURL$", config.destFileName);
 
     fs.writeFileSync(path.join(config.destPath, `${rname}.html`), result);
 
