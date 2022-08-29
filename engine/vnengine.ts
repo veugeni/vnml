@@ -9,9 +9,14 @@ const States = {
 };
 
 const StyledAttributes = {
-  flip: " -webkit-transform: scaleX(-1);transform: scaleX(-1);",
-  blur: "blur(10px)",
-  gray: "grayscale(1)",
+  flip: () => " -webkit-transform: scaleX(-1);transform: scaleX(-1);",
+  blur: () => "blur(10px)",
+  gray: () => "grayscale(1)",
+  shadow: () => "drop-shadow(30px 10px 4px #000000);",
+  shatter: () => {
+    const angle = Math.random() * 6 - 3;
+    return ` -webkit-transform: rotateZ(${angle}deg);transform: rotateZ(${angle}deg);`;
+  },
 };
 
 const EffectAttributes = {
@@ -507,7 +512,8 @@ function clearCharacters() {
 }
 
 function parseBackground(e: HTMLElement) {
-  const style = parseStyleAttributes(e).join(";");
+  const style = parseStyleAttributes(e).join(" ");
+  setBackgroundEffect("");
 
   if (e.children.length === 1) {
     const back = seekTag(e.children[0].tagName);
@@ -626,7 +632,7 @@ function parseStyleAttributes(e: HTMLElement) {
   for (let i = 0; i < e.attributes.length; i++) {
     const attr = e.attributes.item(i);
     if (attr && StyledAttributes[attr.name]) {
-      result.push(StyledAttributes[attr.name]);
+      result.push(StyledAttributes[attr.name]());
     }
   }
 
@@ -847,8 +853,8 @@ function toggleAudio() {
 function addFrontend() {
   const template = `
       <div class="VNBackground">
-        <div class="VNBackground VNBackgroundOverlay"></div>
         <div class="VNBackground VNBackgroundEffects"></div>
+        <div class="VNBackground VNBackgroundOverlay"></div>
       </div>
       <div class="VNCharacter VNCAnchorRight"></div>
       <div class="VNCharacter VNCAnchorLeft"></div>
