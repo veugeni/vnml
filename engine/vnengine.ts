@@ -130,7 +130,7 @@ const Config = {
   paragraphLimit: window.screen.width <= 736 ? 200 : 300,
   hiddenChoices: true,
   version: "1.0",
-  disableSave: true,
+  disableSave: false,
   showTokenDebug: true,
   showDebug: true,
 };
@@ -192,9 +192,22 @@ function startup() {
       context.slot = parseInt(params.get("s"));
       console.log("Load from slot " + context.slot);
       load(context.slot);
+    } else if (params.has("c")) {
+      context.slot = parseInt(params.get("c"));
+      console.log("Clearing slot " + context.slot);
+      localStorage.removeItem(context.saveToken);
+      window.location.href = window.location.href.replace(
+        `c=${context.slot}`,
+        `s=${context.slot}`
+      );
     }
 
     step();
+
+    if (params.has("g")) {
+      console.log("Forced jump to label", params.get("g"));
+      moveTo(params.get("g"));
+    }
   } else {
     alert("This is not a VNML page");
   }

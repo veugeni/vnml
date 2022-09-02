@@ -152,6 +152,9 @@ function build(source: string, options: any) {
       .replace("vncore.css", `${rname}.css`)
       .replace("$DESTINATION$", `./${rname}.html`)
       .replace("$DESTINATION$", `./${rname}.html`)
+      .replace("$DESTINATION$", `./${rname}.html`)
+      .replace("$DESTINATION$", `./${rname}.html`)
+      .replace("$DESTINATION$", `./${rname}.html`)
       .replace("$DESTINATION$", `./${rname}.html`);
     fs.writeFileSync(config.destFullPath, menuResult);
 

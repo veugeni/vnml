@@ -126,6 +126,9 @@ function build(source, options) {
             .replace("vncore.css", "".concat(rname, ".css"))
             .replace("$DESTINATION$", "./".concat(rname, ".html"))
             .replace("$DESTINATION$", "./".concat(rname, ".html"))
+            .replace("$DESTINATION$", "./".concat(rname, ".html"))
+            .replace("$DESTINATION$", "./".concat(rname, ".html"))
+            .replace("$DESTINATION$", "./".concat(rname, ".html"))
             .replace("$DESTINATION$", "./".concat(rname, ".html"));
         fs_1["default"].writeFileSync(config.destFullPath, menuResult);
         result = result
