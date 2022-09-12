@@ -9,6 +9,8 @@ var fs_1 = __importDefault(require("fs"));
 var path_1 = __importDefault(require("path"));
 var commander_1 = require("commander");
 var child_process_1 = require("child_process");
+var htmlparser2_1 = require("htmlparser2");
+var errorCodes_1 = require("./errorCodes");
 var program = new commander_1.Command();
 program
     .name("vnml")
@@ -24,7 +26,7 @@ program
     .option("-c, --clean", "clean up destination folder before building")
     .option("-p, --port <port>", "sets debug server port (default 8080)")
     .action(function (source, options) {
-    console.log("options", options);
+    // console.log("options", options);
     build(source, options);
 });
 program.parse();
@@ -60,7 +62,7 @@ function build(source, options) {
         config.destPath = "./build";
     }
     config.destFullPath = path_1["default"].join(config.destPath, config.destFileName);
-    console.log("config", config);
+    // console.log("config", config);
     if (config.sourceExt.toLowerCase() === ".vnml") {
         try {
             if (!fs_1["default"].existsSync(config.sourceFullPath)) {
@@ -106,6 +108,12 @@ function build(source, options) {
         var sourceVnml = fs_1["default"].readFileSync(config.sourceFullPath, {
             encoding: "utf8"
         });
+        var copyright = checkSource(sourceVnml);
+        (0, errorCodes_1.showCheckResults)();
+        if ((0, errorCodes_1.hasErrors)()) {
+            process.exit(1);
+        }
+        config.title = "".concat(copyright.title, " by ").concat(copyright.author);
         var frame = fs_1["default"].readFileSync("./engine/frame.template", {
             encoding: "utf8"
         });
@@ -156,4 +164,198 @@ function build(source, options) {
         console.log("Error: ", err);
         process.exit(1);
     }
+}
+function checkSource(source) {
+    (0, errorCodes_1.clearCheckResults)();
+    var nodeStack = [];
+    var vnmlFound = false;
+    var characters = [];
+    var labels = [];
+    var jumps = [];
+    var chapters = 0;
+    var choices = 0;
+    var title = "Unknown title";
+    var author = "Unknown author";
+    try {
+        var parentIs_1 = function (name) {
+            return (nodeStack.length > 0 ? nodeStack[nodeStack.length - 1].name : "") ===
+                name;
+        };
+        var getParent_1 = function () {
+            return nodeStack.length > 0 ? nodeStack[nodeStack.length - 1].name : "";
+        };
+        var grandIs_1 = function (name) {
+            return (nodeStack.length > 1 ? nodeStack[nodeStack.length - 2].name : "") ===
+                name;
+        };
+        var alreadyFound_1 = function (name) {
+            return nodeStack.length > 0
+                ? nodeStack[nodeStack.length - 1].found.includes(name)
+                : false;
+        };
+        var hasChildren_1 = function () {
+            return nodeStack.length > 0
+                ? nodeStack[nodeStack.length - 1].found.length > 0
+                : false;
+        };
+        var pushNode_1 = function (name) {
+            if (nodeStack.length > 0)
+                nodeStack[nodeStack.length - 1].found.push(name);
+            nodeStack.push({ name: name, found: [] });
+        };
+        var popNode_1 = function () { return nodeStack.pop(); };
+        var check1_1 = function (name, parent, unique) {
+            if (parentIs_1(parent)) {
+                if (unique && alreadyFound_1(name)) {
+                    // Multiple not allowed
+                    (0, errorCodes_1.addError)("ERR003", 0, name);
+                }
+            }
+            else {
+                // must be used in specific parent
+                (0, errorCodes_1.addError)("ERR004", 0, "".concat(name, " must be child of ").concat(parent));
+            }
+        };
+        var parser = new htmlparser2_1.Parser({
+            onopentag: function (name, attributes) {
+                if (vnmlFound) {
+                    console.log("Processing ", name);
+                    console.log("Parent", nodeStack.length > 0 ? nodeStack[nodeStack.length - 1].name : "");
+                    switch (name) {
+                        case "vnml":
+                            (0, errorCodes_1.addError)("ERR003", 0, "Main node (VNML)");
+                            break;
+                        case "vn":
+                        case "vnd":
+                            check1_1(name, "vnml", true);
+                            break;
+                        case "bk":
+                            if (grandIs_1("vnd")) {
+                                if (alreadyFound_1("bk")) {
+                                    (0, errorCodes_1.addError)("ERR003", 0, "Image node must be unique in reference");
+                                }
+                            }
+                            else {
+                                if (!parentIs_1("vn")) {
+                                    (0, errorCodes_1.addError)("ERR005", 0, "Background node must be used in reference or chapters only");
+                                }
+                            }
+                            break;
+                        case "nm":
+                            if (grandIs_1("vnd")) {
+                                if (alreadyFound_1("nm")) {
+                                    (0, errorCodes_1.addError)("ERR003", 0, "Name node must be unique in reference");
+                                }
+                            }
+                            else {
+                                (0, errorCodes_1.addError)("ERR005", 0, "Name node must be used in reference only");
+                            }
+                            break;
+                        case "st":
+                        case "au":
+                            check1_1(name, "vnd", true);
+                            break;
+                        case "gt":
+                            check1_1(name, "ch", true);
+                            break;
+                        case "ch":
+                            check1_1(name, "vn", false);
+                            choices++;
+                            break;
+                        case "lb":
+                        case "cr":
+                        case "cl":
+                        case "cm":
+                        case "bgm":
+                        case "sfx":
+                            check1_1(name, "vn", false);
+                            break;
+                        case "p":
+                            chapters++;
+                            check1_1(name, "vn", false);
+                            break;
+                        default:
+                            // Not reserved words
+                            if (parentIs_1("vnd")) {
+                                // It's a character definition
+                                if (characters.includes(name)) {
+                                    (0, errorCodes_1.addError)("ERR006", 0, "Reference ".concat(name, " already defined."));
+                                }
+                                characters.push(name);
+                            }
+                            else if (parentIs_1("vn")) {
+                                // It's a paragraph
+                                chapters++;
+                            }
+                            else if (parentIs_1("cr") ||
+                                parentIs_1("cm") ||
+                                parentIs_1("cl") ||
+                                parentIs_1("bk")) {
+                                // It's an image reference
+                                if (hasChildren_1()) {
+                                    (0, errorCodes_1.addWarning)("WAR003", 0, "Only one reference allowed.");
+                                }
+                            }
+                            else {
+                                // It will be ignored.
+                                (0, errorCodes_1.addWarning)("WAR002", 0, "maybe ".concat(name, " is misplaced?"));
+                            }
+                            break;
+                    }
+                }
+                if (name === "vnml")
+                    vnmlFound = true;
+                pushNode_1(name);
+            },
+            ontext: function (text) {
+                switch (getParent_1()) {
+                    case "lb":
+                        if (labels.includes(text)) {
+                            (0, errorCodes_1.addError)("ERR007", 0, "".concat(text, " is duplicated"));
+                        }
+                        labels.push(text);
+                        break;
+                    case "gt":
+                        jumps.push(text);
+                        break;
+                    case "au":
+                        author = text;
+                        break;
+                    case "st":
+                        title = text;
+                        break;
+                }
+            },
+            onclosetag: function (tagname) {
+                var node = popNode_1();
+                if ((node === null || node === void 0 ? void 0 : node.name) !== tagname) {
+                    (0, errorCodes_1.addError)("ERR005", 0, "misplaced closing tag ".concat(tagname, " needed ").concat(node === null || node === void 0 ? void 0 : node.name));
+                }
+            }
+        }, { lowerCaseTags: true, recognizeSelfClosing: true });
+        parser.write(source);
+        parser.end();
+        jumps.forEach(function (e) {
+            if (!labels.includes(e)) {
+                (0, errorCodes_1.addWarning)("WAR005", 0, "Jump to ".concat(e, " have no corresponding label"));
+            }
+        });
+        console.log("References");
+        characters.forEach(function (e) { return console.log("- ".concat(e)); });
+        console.log("");
+        console.log("Labels");
+        labels.forEach(function (e) { return console.log("- ".concat(e)); });
+        console.log("");
+        console.log("Total number of jumps: ".concat(jumps.length));
+        console.log("Total number of choices: ".concat(choices));
+        console.log("Total number of chapters: ".concat(chapters));
+        console.log("");
+        console.log("Title: ".concat(title, ", Author: ").concat(author));
+        console.log("");
+    }
+    catch (err) {
+        console.log("Error in syntax checking: ", err);
+        (0, errorCodes_1.addError)("ERR000", 0, "");
+    }
+    return { title: title, author: author };
 }

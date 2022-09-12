@@ -1,9 +1,19 @@
 #!/usr/bin/env node
 import { version } from "./package.json";
 import fs from "fs";
-import path from "path";
+import path, { parse } from "path";
 import { Command } from "commander";
 import { spawnSync } from "child_process";
+import { ElementType, Parser } from "htmlparser2";
+import {
+  addError,
+  addWarning,
+  checkResults,
+  clearCheckResults,
+  hasErrors,
+  showCheckResults,
+  SourceCheckResult,
+} from "./errorCodes";
 
 const program = new Command();
 
@@ -22,7 +32,7 @@ program
   .option("-c, --clean", "clean up destination folder before building")
   .option("-p, --port <port>", "sets debug server port (default 8080)")
   .action((source: string, options: any) => {
-    console.log("options", options);
+    // console.log("options", options);
     build(source, options);
   });
 
@@ -68,7 +78,7 @@ function build(source: string, options: any) {
 
   config.destFullPath = path.join(config.destPath, config.destFileName);
 
-  console.log("config", config);
+  // console.log("config", config);
 
   if (config.sourceExt.toLowerCase() === ".vnml") {
     try {
@@ -118,6 +128,16 @@ function build(source: string, options: any) {
     const sourceVnml = fs.readFileSync(config.sourceFullPath, {
       encoding: "utf8",
     });
+
+    const copyright = checkSource(sourceVnml);
+
+    showCheckResults();
+
+    if (hasErrors()) {
+      process.exit(1);
+    }
+
+    config.title = `${copyright.title} by ${copyright.author}`;
 
     const frame = fs.readFileSync("./engine/frame.template", {
       encoding: "utf8",
@@ -191,4 +211,235 @@ function build(source: string, options: any) {
     console.log("Error: ", err);
     process.exit(1);
   }
+}
+
+type NodeStackElement = {
+  name: string;
+  found: string[];
+};
+
+function checkSource(source: string) {
+  clearCheckResults();
+  const nodeStack: NodeStackElement[] = [];
+  let vnmlFound: boolean = false;
+  const characters: string[] = [];
+  const labels: string[] = [];
+  const jumps: string[] = [];
+  let chapters = 0;
+  let choices = 0;
+  let title = "Unknown title";
+  let author = "Unknown author";
+
+  try {
+    const parentIs = (name: string) =>
+      (nodeStack.length > 0 ? nodeStack[nodeStack.length - 1].name : "") ===
+      name;
+
+    const getParent = () =>
+      nodeStack.length > 0 ? nodeStack[nodeStack.length - 1].name : "";
+
+    const grandIs = (name: string) =>
+      (nodeStack.length > 1 ? nodeStack[nodeStack.length - 2].name : "") ===
+      name;
+
+    const alreadyFound = (name: string) =>
+      nodeStack.length > 0
+        ? nodeStack[nodeStack.length - 1].found.includes(name)
+        : false;
+
+    const hasChildren = () =>
+      nodeStack.length > 0
+        ? nodeStack[nodeStack.length - 1].found.length > 0
+        : false;
+
+    const pushNode = (name: string) => {
+      if (nodeStack.length > 0)
+        nodeStack[nodeStack.length - 1].found.push(name);
+      nodeStack.push({ name, found: [] });
+    };
+
+    const popNode = () => nodeStack.pop();
+
+    const check1 = (name: string, parent: string, unique: boolean) => {
+      if (parentIs(parent)) {
+        if (unique && alreadyFound(name)) {
+          // Multiple not allowed
+          addError("ERR003", 0, name);
+        }
+      } else {
+        // must be used in specific parent
+        addError("ERR004", 0, `${name} must be child of ${parent}`);
+      }
+    };
+
+    const parser = new Parser(
+      {
+        onopentag(name, attributes) {
+          if (vnmlFound) {
+            console.log("Processing ", name);
+            console.log(
+              "Parent",
+              nodeStack.length > 0 ? nodeStack[nodeStack.length - 1].name : ""
+            );
+
+            switch (name) {
+              case "vnml":
+                addError("ERR003", 0, "Main node (VNML)");
+                break;
+              case "vn":
+              case "vnd":
+                check1(name, "vnml", true);
+                break;
+              case "bk":
+                if (grandIs("vnd")) {
+                  if (alreadyFound("bk")) {
+                    addError(
+                      "ERR003",
+                      0,
+                      "Image node must be unique in reference"
+                    );
+                  }
+                } else {
+                  if (!parentIs("vn")) {
+                    addError(
+                      "ERR005",
+                      0,
+                      "Background node must be used in reference or chapters only"
+                    );
+                  }
+                }
+                break;
+              case "nm":
+                if (grandIs("vnd")) {
+                  if (alreadyFound("nm")) {
+                    addError(
+                      "ERR003",
+                      0,
+                      "Name node must be unique in reference"
+                    );
+                  }
+                } else {
+                  addError(
+                    "ERR005",
+                    0,
+                    "Name node must be used in reference only"
+                  );
+                }
+                break;
+              case "st":
+              case "au":
+                check1(name, "vnd", true);
+                break;
+              case "gt":
+                check1(name, "ch", true);
+                break;
+              case "ch":
+                check1(name, "vn", false);
+                choices++;
+                break;
+              case "lb":
+              case "cr":
+              case "cl":
+              case "cm":
+              case "bgm":
+              case "sfx":
+                check1(name, "vn", false);
+                break;
+              case "p":
+                chapters++;
+                check1(name, "vn", false);
+                break;
+              default:
+                // Not reserved words
+                if (parentIs("vnd")) {
+                  // It's a character definition
+                  if (characters.includes(name)) {
+                    addError("ERR006", 0, `Reference ${name} already defined.`);
+                  }
+                  characters.push(name);
+                } else if (parentIs("vn")) {
+                  // It's a paragraph
+                  chapters++;
+                } else if (
+                  parentIs("cr") ||
+                  parentIs("cm") ||
+                  parentIs("cl") ||
+                  parentIs("bk")
+                ) {
+                  // It's an image reference
+                  if (hasChildren()) {
+                    addWarning("WAR003", 0, `Only one reference allowed.`);
+                  }
+                } else {
+                  // It will be ignored.
+                  addWarning("WAR002", 0, `maybe ${name} is misplaced?`);
+                }
+                break;
+            }
+          }
+
+          if (name === "vnml") vnmlFound = true;
+
+          pushNode(name);
+        },
+        ontext(text) {
+          switch (getParent()) {
+            case "lb":
+              if (labels.includes(text)) {
+                addError("ERR007", 0, `${text} is duplicated`);
+              }
+              labels.push(text);
+              break;
+            case "gt":
+              jumps.push(text);
+              break;
+            case "au":
+              author = text;
+              break;
+            case "st":
+              title = text;
+              break;
+          }
+        },
+        onclosetag(tagname) {
+          const node = popNode();
+          if (node?.name !== tagname) {
+            addError(
+              "ERR005",
+              0,
+              `misplaced closing tag ${tagname} needed ${node?.name}`
+            );
+          }
+        },
+      },
+      { lowerCaseTags: true, recognizeSelfClosing: true }
+    );
+
+    parser.write(source);
+    parser.end();
+
+    jumps.forEach((e) => {
+      if (!labels.includes(e)) {
+        addWarning("WAR005", 0, `Jump to ${e} have no corresponding label`);
+      }
+    });
+
+    console.log("References");
+    characters.forEach((e) => console.log(`- ${e}`));
+    console.log("");
+    console.log("Labels");
+    labels.forEach((e) => console.log(`- ${e}`));
+    console.log("");
+    console.log(`Total number of jumps: ${jumps.length}`);
+    console.log(`Total number of choices: ${choices}`);
+    console.log(`Total number of chapters: ${chapters}`);
+    console.log("");
+    console.log(`Title: ${title}, Author: ${author}`);
+    console.log("");
+  } catch (err) {
+    console.log("Error in syntax checking: ", err);
+    addError("ERR000", 0, "");
+  }
+
+  return { title, author };
 }
