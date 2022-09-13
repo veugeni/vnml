@@ -1,18 +1,16 @@
 #!/usr/bin/env node
 import { version } from "./package.json";
 import fs from "fs";
-import path, { parse } from "path";
+import path from "path";
 import { Command } from "commander";
 import { spawnSync } from "child_process";
-import { ElementType, Parser } from "htmlparser2";
+import { Parser } from "htmlparser2";
 import {
   addError,
   addWarning,
-  checkResults,
   clearCheckResults,
   hasErrors,
   showCheckResults,
-  SourceCheckResult,
 } from "./errorCodes";
 
 const program = new Command();
@@ -32,14 +30,37 @@ program
   .option("-c, --clean", "clean up destination folder before building")
   .option("-p, --port <port>", "sets debug server port (default 8080)")
   .action((source: string, options: any) => {
-    // console.log("options", options);
     build(source, options);
+  });
+
+program
+  .command("check")
+  .alias("c")
+  .description("Syntax checks VNML file")
+  .argument("<source>", "source file name")
+  .action((source: string, options: any) => {
+    compile(source, options);
   });
 
 program.parse();
 
-function build(source: string, options: any) {
-  const config = {
+interface Config {
+  sourceFullPath: string;
+  sourcePath: string;
+  sourceFileName: string;
+  sourceExt: string;
+  destFileName: string;
+  destExt: string;
+  destPath: string;
+  destFullPath: string;
+  title: string;
+  author: string;
+  pageTitle: string;
+  port: string;
+}
+
+function getDefaultConfig(source: string, options: any): Config {
+  return {
     sourceFullPath: source,
     sourcePath: path.dirname(source),
     sourceFileName: path.basename(source),
@@ -48,9 +69,62 @@ function build(source: string, options: any) {
     destExt: "",
     destPath: "",
     destFullPath: "",
-    title: "build",
+    title: "Unspecified...",
+    author: "Unspecified...",
+    pageTitle: "VNML Game",
     port: options.port || "8080",
   };
+}
+
+function checkSourceExistance(config: Config) {
+  if (config.sourceExt.toLowerCase() === ".vnml") {
+    try {
+      if (!fs.existsSync(config.sourceFullPath)) {
+        console.log(`File ${config.sourceFileName} does not exists.`);
+        return false;
+      }
+      return true;
+    } catch (err) {
+      console.log("Error in getting file: ", err);
+      return false;
+    }
+  } else {
+    console.log(
+      `File ${config.sourceFileName} must be have .vnml extension. Why? Because I like the sound of it.`
+    );
+    return false;
+  }
+}
+
+function compile(source: string, options: any) {
+  console.log(`VNML Compiler & builder v.${version}\n`);
+  console.log(`Checking ${source}\n`);
+
+  const config = getDefaultConfig(source, options);
+
+  if (checkSourceExistance(config)) {
+    try {
+      const sourceVnml = fs.readFileSync(config.sourceFullPath, {
+        encoding: "utf8",
+      });
+
+      checkSource(sourceVnml);
+      showCheckResults();
+      process.exit(hasErrors() ? 1 : 0);
+    } catch (err) {
+      console.log("Error: ", err);
+      process.exit(1);
+    }
+  }
+
+  process.exit(1);
+}
+
+function build(source: string, options: any) {
+  console.log(`VNML Compiler & builder v.${version}\n`);
+  console.log(`Building ${source}\n`);
+
+  const config = getDefaultConfig(source, options);
 
   if (options.destination) {
     config.destExt = path.extname(options.destination);
@@ -78,137 +152,130 @@ function build(source: string, options: any) {
 
   config.destFullPath = path.join(config.destPath, config.destFileName);
 
-  // console.log("config", config);
-
-  if (config.sourceExt.toLowerCase() === ".vnml") {
+  if (checkSourceExistance(config)) {
     try {
-      if (!fs.existsSync(config.sourceFullPath)) {
-        console.log(`File ${config.sourceFileName} does not exists.`);
-        process.exit(1);
+      if (!fs.existsSync(config.destPath)) {
+        fs.mkdirSync(config.destPath);
       }
     } catch (err) {
-      console.log("Error in getting file: ", err);
+      console.log(`Error creating destination path ${config.destPath}:`, err);
+      process.exit(1);
+    }
+
+    if (options.clean) {
+      console.log("Cleaning up output...");
+
+      try {
+        const dir = fs.readdirSync(config.destPath, { withFileTypes: true });
+
+        dir.forEach((e) => {
+          if (e.isFile()) {
+            // console.log(`unlink ${e.name}`);
+            fs.unlinkSync(path.join(config.destPath, e.name));
+          }
+        });
+      } catch (err) {
+        console.log("Error cleaning output:", err);
+        process.exit(1);
+      }
+    }
+
+    try {
+      console.log("Reading source...");
+
+      const sourceVnml = fs.readFileSync(config.sourceFullPath, {
+        encoding: "utf8",
+      });
+
+      console.log("Checking source...");
+      const copyright = checkSource(sourceVnml);
+
+      console.log("");
+      showCheckResults();
+      console.log("");
+
+      if (hasErrors()) {
+        process.exit(1);
+      }
+
+      console.log("Building package...");
+      config.title = copyright.title;
+      config.author = copyright.author;
+      config.pageTitle = `${copyright.title} by ${copyright.author}`;
+
+      const frame = fs.readFileSync("./engine/frame.template", {
+        encoding: "utf8",
+      });
+
+      const menu = fs.readFileSync("./engine/menu.template", {
+        encoding: "utf8",
+      });
+
+      let menuResult = replaceAll(menu, "$TITLE$", config.title);
+      menuResult = replaceAll(menuResult, "$PAGETITLE$", config.pageTitle);
+      menuResult = replaceAll(menuResult, "$AUTHOR$", config.author);
+
+      let result = replaceAll(frame, "$TITLE$", config.title);
+      result = replaceAll(result, "$PAGETITLE$", config.pageTitle);
+      result = replaceAll(result, "$AUTHOR$", config.author);
+
+      const rname =
+        Math.random().toString(36).substring(2, 15) +
+        Math.random().toString(23).substring(2, 5);
+
+      fs.copyFileSync(
+        "./engine/vnengine.js",
+        path.join(config.destPath, `${rname}.js`)
+      );
+      fs.copyFileSync(
+        "./engine/vncore.css",
+        path.join(config.destPath, `${rname}.css`)
+      );
+
+      result = result
+        .replace("vnengine.js", `${rname}.js`)
+        .replace("vncore.css", `${rname}.css`);
+
+      menuResult = menuResult
+        .replace("vnengine.js", `${rname}.js`)
+        .replace("vncore.css", `${rname}.css`)
+        .replace("$DESTINATION$", `./${rname}.html`);
+      fs.writeFileSync(config.destFullPath, menuResult);
+
+      result = result
+        .replace("$ITSAME$", sourceVnml)
+        .replace("$EXITURL$", config.destFileName);
+
+      fs.writeFileSync(path.join(config.destPath, `${rname}.html`), result);
+
+      console.log(`Distribution package built in ${config.destPath}`);
+
+      if (options.run) {
+        console.log(`\nRunning debug server on port ${config.port}`);
+        console.log("Press CTRL+C to stop it");
+        const p = spawnSync(
+          "http-server",
+          [
+            config.destPath,
+            `-o ${config.destFileName} `,
+            "-c-1",
+            "--silent",
+            `-p${config.port}`,
+          ],
+          { shell: true }
+        );
+
+        if (p) {
+          console.log("p:", p);
+        }
+      }
+
+      process.exit(0);
+    } catch (err) {
+      console.log("Error: ", err);
       process.exit(1);
     }
   } else {
-    console.log(
-      `File ${config.sourceFileName} must be have .vnml extension. Why? Because I like the sound of it.`
-    );
-    process.exit(1);
-  }
-
-  try {
-    if (!fs.existsSync(config.destPath)) {
-      fs.mkdirSync(config.destPath);
-    }
-  } catch (err) {
-    console.log(`Error creating destination path ${config.destPath}:`, err);
-    process.exit(1);
-  }
-
-  if (options.clean) {
-    console.log("Cleaning up output");
-
-    try {
-      const dir = fs.readdirSync(config.destPath, { withFileTypes: true });
-
-      dir.forEach((e) => {
-        if (e.isFile()) {
-          console.log(`unlink ${e.name}`);
-          fs.unlinkSync(path.join(config.destPath, e.name));
-        }
-      });
-    } catch (err) {
-      console.log("Error cleaning output:", err);
-      process.exit(1);
-    }
-  }
-
-  try {
-    const sourceVnml = fs.readFileSync(config.sourceFullPath, {
-      encoding: "utf8",
-    });
-
-    const copyright = checkSource(sourceVnml);
-
-    showCheckResults();
-
-    if (hasErrors()) {
-      process.exit(1);
-    }
-
-    config.title = `${copyright.title} by ${copyright.author}`;
-
-    const frame = fs.readFileSync("./engine/frame.template", {
-      encoding: "utf8",
-    });
-
-    const menu = fs.readFileSync("./engine/menu.template", {
-      encoding: "utf8",
-    });
-
-    let menuResult = menu.replace("$TITLE$", config.title);
-    let result = frame.replace("$TITLE$", config.title);
-
-    const rname =
-      Math.random().toString(36).substring(2, 15) +
-      Math.random().toString(23).substring(2, 5);
-
-    fs.copyFileSync(
-      "./engine/vnengine.js",
-      path.join(config.destPath, `${rname}.js`)
-    );
-    fs.copyFileSync(
-      "./engine/vncore.css",
-      path.join(config.destPath, `${rname}.css`)
-    );
-
-    result = result
-      .replace("vnengine.js", `${rname}.js`)
-      .replace("vncore.css", `${rname}.css`);
-
-    // TODO: A better solution for this!
-    menuResult = menuResult
-      .replace("vncore.css", `${rname}.css`)
-      .replace("$DESTINATION$", `./${rname}.html`)
-      .replace("$DESTINATION$", `./${rname}.html`)
-      .replace("$DESTINATION$", `./${rname}.html`)
-      .replace("$DESTINATION$", `./${rname}.html`)
-      .replace("$DESTINATION$", `./${rname}.html`)
-      .replace("$DESTINATION$", `./${rname}.html`);
-    fs.writeFileSync(config.destFullPath, menuResult);
-
-    result = result
-      .replace("$ITSAME$", sourceVnml)
-      .replace("$EXITURL$", config.destFileName);
-
-    fs.writeFileSync(path.join(config.destPath, `${rname}.html`), result);
-
-    console.log(`Distribution package built in ${config.destPath}`);
-
-    if (options.run) {
-      console.log(`Running debug server on port ${config.port}`);
-      console.log("Press CTRL+C to stop it");
-      const p = spawnSync(
-        "http-server",
-        [
-          config.destPath,
-          `-o ${config.destFileName} `,
-          "-c-1",
-          "--silent",
-          `-p${config.port}`,
-        ],
-        { shell: true }
-      );
-
-      if (p) {
-        console.log("p:", p);
-      }
-    }
-
-    process.exit(0);
-  } catch (err) {
-    console.log("Error: ", err);
     process.exit(1);
   }
 }
@@ -291,12 +358,6 @@ function checkSource(source: string) {
       {
         onopentag(name, attributes) {
           if (vnmlFound) {
-            /* console.log("Processing ", name);
-            console.log(
-              "Parent",
-              nodeStack.length > 0 ? nodeStack[nodeStack.length - 1].name : ""
-            ); */
-
             switch (name) {
               case "vnml":
                 addError("ERR003", 0, "Main node (VNML)");
@@ -475,4 +536,14 @@ function checkSource(source: string) {
   }
 
   return { title, author };
+}
+
+function replaceAll(text: string, search: string, what: string): string {
+  let result = text + "";
+
+  while (result.indexOf(search) >= 0) {
+    result = result.replace(search, what);
+  }
+
+  return result;
 }

@@ -681,3 +681,93 @@ body {
   color: white;
   transition-duration: 0.5s;
 }
+
+/* Menu */
+
+.VNMBackground {
+  position: fixed;
+  top: 0px;
+  left: 0px;
+  width: 100vw;
+  height: 100vh;
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover;
+  z-index: 100;
+  display: block !important;
+}
+
+.VNMTitle {
+  width: 100vw;
+  display: flex;
+  align-content: center;
+  align-items: center;
+  flex-direction: row;
+  justify-content: center;
+  color: white;
+  text-align: center;
+  margin-top: 1em;
+}
+
+.VNMAuthor {
+  width: 100vw;
+  display: flex;
+  align-content: center;
+  align-items: center;
+  flex-direction: row;
+  justify-content: center;
+  color: white;
+  text-align: center;
+  margin-top: 0.5em;
+}
+
+.VNMButton {
+  width: 100vw;
+  display: flex;
+  align-content: center;
+  align-items: center;
+  flex-direction: row;
+  justify-content: center;
+  color: white;
+  cursor: pointer;
+  margin-top: 1em;
+}
+
+.VNMText {
+  color: white;
+}
+
+.VNMText:hover {
+  color: yellow;
+}
+
+.VNMDate {
+  font-size: small;
+  color: white;
+  display: block;
+}
+
+.VNMClearButton {
+  display: flex;
+  flex-direction: row;
+  align-content: center;
+  align-items: center;
+  flex-direction: row;
+  justify-content: center;
+  color: white;
+  cursor: pointer;
+  width: 48px;
+  height: 48px;
+  font-size: medium;
+}
+
+.VNMClearButton:hover {
+  color: yellow;
+}
+
+.VNMButtonLabel {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 384px;
+}

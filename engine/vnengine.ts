@@ -467,7 +467,7 @@ function step() {
     hideChoices();
     fetchParagraph();
     render();
-    save(0);
+    save(context.slot);
 
     if (!setWait()) {
       Config.showTokenDebug && console.log("Nothing to wait");
@@ -1050,5 +1050,48 @@ function load(slot: number) {
     }
   } catch (err) {
     console.log("Error in loading: ", err);
+  }
+}
+
+function slots(token: string) {
+  try {
+    const raw = localStorage.getItem(token);
+    const read: Serialized = JSON.parse(raw);
+
+    if (read) {
+      console.log("Slots loaded", read);
+      return read;
+    } else {
+      console.log("Slots empty");
+      return { title: token, slots: [] };
+    }
+  } catch (err) {
+    console.log("Error in loading: ", err);
+    return null;
+  }
+}
+
+function menu(title: string) {
+  console.log("Building menu");
+  const token = buildToken(title);
+  console.log("Token", token);
+  const saved = slots(token);
+  console.log("Saved", saved);
+
+  const menuContainer = document.querySelector(".VNMBackground");
+
+  for (var i = 0; i < 3; i++) {
+    const b = document.createElement("div");
+    b.className = "VNMButton disable-select";
+
+    const text =
+      saved && saved.slots[i] ? `Slot ${i + 1}` : `New game slot ${i + 1}`;
+    const date = saved && saved.slots[i] ? saved.slots[i].date : "";
+    const clear = saved && saved.slots[i] ? "Clear" : "";
+
+    b.innerHTML = `<div class='VNMButtonLabel'><span class='VNMText' onclick='go(${i}, false)'>${text}</span><span class='VNMDate'>${date}
+    </span></div><div class='VNMClearButton' onclick='go(${i}, true)'>${clear}</div>`;
+
+    menuContainer.appendChild(b);
   }
 }

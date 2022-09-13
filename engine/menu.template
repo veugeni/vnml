@@ -1,6 +1,6 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
   <head>
-    <title>$TITLE$</title>
+    <title>$PAGETITLE$</title>
     <meta lang="IT-it" />
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -12,47 +12,18 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="vncore.css" />
+    <script src="vnengine.js"></script>
+    <script>
+      function go(slot, reset) {
+        window.open(`$DESTINATION$?${reset ? "c" : "s"}=${slot}`, "_self");
+      }
+    </script>
   </head>
 
-  <body>
-    <p style="display: block; color: white">SONO UN MENU!</p>
-    <p></p>
-    <p
-      style="display: block; color: white; cursor: pointer"
-      onclick="window.open('$DESTINATION$?s=0','_self')"
-    >
-      SLOT 1
-    </p>
-    <p
-      style="display: block; color: white; cursor: pointer"
-      onclick="window.open('$DESTINATION$?s=1','_self')"
-    >
-      SLOT 2
-    </p>
-    <p
-      style="display: block; color: white; cursor: pointer"
-      onclick="window.open('$DESTINATION$?s=2','_self')"
-    >
-      SLOT 3
-    </p>
-    <p></p>
-    <p
-      style="display: block; color: white; cursor: pointer"
-      onclick="window.open('$DESTINATION$?c=0','_self')"
-    >
-      RESTART 1
-    </p>
-    <p
-      style="display: block; color: white; cursor: pointer"
-      onclick="window.open('$DESTINATION$?c=1','_self')"
-    >
-      RESTART 2
-    </p>
-    <p
-      style="display: block; color: white; cursor: pointer"
-      onclick="window.open('$DESTINATION$?c=2','_self')"
-    >
-      RESTART 3
-    </p>
+  <body onload="menu(`$TITLE$`)">
+    <div class="VNMBackground">
+      <div class="VNMTitle">$TITLE$</div>
+      <div class="VNMAuthor">$AUTHOR$</div>
+    </div>
   </body>
 </html>
