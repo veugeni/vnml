@@ -216,11 +216,23 @@ function checkSource(source) {
                 (0, errorCodes_1.addError)("ERR004", 0, "".concat(name, " must be child of ").concat(parent));
             }
         };
+        var checkValidAttributes_1 = function (name, attributes, valid, allowNumeric) {
+            Object.entries(attributes)
+                .filter(function (e) {
+                return allowNumeric && !isNaN(parseInt(e[0])) ? false : !valid.includes(e[0]);
+            })
+                .forEach(function (e) {
+                return (0, errorCodes_1.addWarning)("WAR006", 0, "Attribute ".concat(e[0], " of ").concat(name, " is unknown."));
+            });
+        };
         var parser = new htmlparser2_1.Parser({
             onopentag: function (name, attributes) {
                 if (vnmlFound) {
-                    console.log("Processing ", name);
-                    console.log("Parent", nodeStack.length > 0 ? nodeStack[nodeStack.length - 1].name : "");
+                    /* console.log("Processing ", name);
+                    console.log(
+                      "Parent",
+                      nodeStack.length > 0 ? nodeStack[nodeStack.length - 1].name : ""
+                    ); */
                     switch (name) {
                         case "vnml":
                             (0, errorCodes_1.addError)("ERR003", 0, "Main node (VNML)");
@@ -240,6 +252,7 @@ function checkSource(source) {
                                     (0, errorCodes_1.addError)("ERR005", 0, "Background node must be used in reference or chapters only");
                                 }
                             }
+                            checkValidAttributes_1(name, attributes, ["flip", "blur", "gray", "flash", "thunder"], false);
                             break;
                         case "nm":
                             if (grandIs_1("vnd")) {
@@ -262,10 +275,13 @@ function checkSource(source) {
                             check1_1(name, "vn", false);
                             choices++;
                             break;
-                        case "lb":
                         case "cr":
                         case "cl":
                         case "cm":
+                            check1_1(name, "vn", false);
+                            checkValidAttributes_1(name, attributes, ["flip", "blur", "gray", "shadow", "shatter"], false);
+                            break;
+                        case "lb":
                         case "bgm":
                         case "sfx":
                             check1_1(name, "vn", false);
@@ -273,6 +289,10 @@ function checkSource(source) {
                         case "p":
                             chapters++;
                             check1_1(name, "vn", false);
+                            break;
+                        case "wait":
+                            check1_1(name, "vn", false);
+                            checkValidAttributes_1(name, attributes, ["key"], true);
                             break;
                         default:
                             // Not reserved words

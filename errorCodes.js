@@ -16,7 +16,8 @@ exports.WarningsCodes = {
     WAR002: "Unknown node found",
     WAR003: "Multiple elements found",
     WAR004: "Misplaced text",
-    WAR005: "Inconsistent jump"
+    WAR005: "Inconsistent jump",
+    WAR006: "Unknown attribute"
 };
 var checkResult = {
     errors: [],

@@ -272,15 +272,30 @@ function checkSource(source: string) {
       }
     };
 
+    const checkValidAttributes = (
+      name: string,
+      attributes: { [s: string]: string },
+      valid: string[],
+      allowNumeric: boolean
+    ) => {
+      Object.entries(attributes)
+        .filter((e) =>
+          allowNumeric && !isNaN(parseInt(e[0])) ? false : !valid.includes(e[0])
+        )
+        .forEach((e) =>
+          addWarning("WAR006", 0, `Attribute ${e[0]} of ${name} is unknown.`)
+        );
+    };
+
     const parser = new Parser(
       {
         onopentag(name, attributes) {
           if (vnmlFound) {
-            console.log("Processing ", name);
+            /* console.log("Processing ", name);
             console.log(
               "Parent",
               nodeStack.length > 0 ? nodeStack[nodeStack.length - 1].name : ""
-            );
+            ); */
 
             switch (name) {
               case "vnml":
@@ -308,6 +323,12 @@ function checkSource(source: string) {
                     );
                   }
                 }
+                checkValidAttributes(
+                  name,
+                  attributes,
+                  ["flip", "blur", "gray", "flash", "thunder"],
+                  false
+                );
                 break;
               case "nm":
                 if (grandIs("vnd")) {
@@ -337,10 +358,18 @@ function checkSource(source: string) {
                 check1(name, "vn", false);
                 choices++;
                 break;
-              case "lb":
               case "cr":
               case "cl":
               case "cm":
+                check1(name, "vn", false);
+                checkValidAttributes(
+                  name,
+                  attributes,
+                  ["flip", "blur", "gray", "shadow", "shatter"],
+                  false
+                );
+                break;
+              case "lb":
               case "bgm":
               case "sfx":
                 check1(name, "vn", false);
@@ -348,6 +377,10 @@ function checkSource(source: string) {
               case "p":
                 chapters++;
                 check1(name, "vn", false);
+                break;
+              case "wait":
+                check1(name, "vn", false);
+                checkValidAttributes(name, attributes, ["key"], true);
                 break;
               default:
                 // Not reserved words
