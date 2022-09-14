@@ -17,9 +17,8 @@ Goals:
 
 3. **Resource sharing.**
 
-   - Backgrounds, characters, musics and sound effects are internet resources.
-   - Why? This is how the internet works, and should improve community built novels
-   - and cooperation.
+   - Backgrounds, characters, musics and sound effects are internet resources. Why? This is how the internet works, and should improve community built novels
+     and cooperation.
 
 4. **Easy to use.**
 
