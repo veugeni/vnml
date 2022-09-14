@@ -9,6 +9,7 @@ Goals:
 1. **Pure HTML/JS game.**
 
    - The novel is stored directly in HTML file.
+   - Game saved in browser's local storage (few bytes).
 
 2. **Complete portability.**
 
@@ -22,8 +23,7 @@ Goals:
 
 4. **Easy to use.**
 
-   - No coding required. Just write VNML in a file, you can use any kind of html editor for source highlighting, build, and share.
-   - VNML compiler provides code checking and testing via embedded server.
+   - No coding required. Just write VNML in a file, you can use any kind of html editor for source highlighting, build, and share. VNML compiler provides code checking and testing via embedded server.
 
 5. **CSS Templates.**
 
@@ -94,10 +94,11 @@ Title: THIS IS A TEST, Author: Me, the author
 
 now you can use the build command `vnml b test.vnml`
 and a build folder with a bunch of file will appear.
-Copy the folder in your favourite webserver and play it.
+Copy the folder in your favourite webserver and play it with a browser.
 
 VNML comes with an embedded web server for testing purposes.
 `vnml b test.vnml -c -r`
+your default browser should open with the menu screen.
 
 ## The Future
 
