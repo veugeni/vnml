@@ -203,11 +203,11 @@ function build(source: string, options: any) {
       config.author = copyright.author;
       config.pageTitle = `${copyright.title} by ${copyright.author}`;
 
-      const frame = fs.readFileSync("./engine/frame.template", {
+      const frame = fs.readFileSync("engine/frame.template", {
         encoding: "utf8",
       });
 
-      const menu = fs.readFileSync("./engine/menu.template", {
+      const menu = fs.readFileSync("engine/menu.template", {
         encoding: "utf8",
       });
 
@@ -224,11 +224,11 @@ function build(source: string, options: any) {
         Math.random().toString(23).substring(2, 5);
 
       fs.copyFileSync(
-        "./engine/vnengine.js",
+        "engine/vnengine.js",
         path.join(config.destPath, `${rname}.js`)
       );
       fs.copyFileSync(
-        "./engine/vncore.css",
+        "engine/vncore.css",
         path.join(config.destPath, `${rname}.css`)
       );
 

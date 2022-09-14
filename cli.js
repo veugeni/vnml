@@ -158,10 +158,10 @@ function build(source, options) {
             config.title = copyright.title;
             config.author = copyright.author;
             config.pageTitle = "".concat(copyright.title, " by ").concat(copyright.author);
-            var frame = fs_1["default"].readFileSync("./engine/frame.template", {
+            var frame = fs_1["default"].readFileSync("engine/frame.template", {
                 encoding: "utf8"
             });
-            var menu = fs_1["default"].readFileSync("./engine/menu.template", {
+            var menu = fs_1["default"].readFileSync("engine/menu.template", {
                 encoding: "utf8"
             });
             var menuResult = replaceAll(menu, "$TITLE$", config.title);
@@ -172,8 +172,8 @@ function build(source, options) {
             result = replaceAll(result, "$AUTHOR$", config.author);
             var rname = Math.random().toString(36).substring(2, 15) +
                 Math.random().toString(23).substring(2, 5);
-            fs_1["default"].copyFileSync("./engine/vnengine.js", path_1["default"].join(config.destPath, "".concat(rname, ".js")));
-            fs_1["default"].copyFileSync("./engine/vncore.css", path_1["default"].join(config.destPath, "".concat(rname, ".css")));
+            fs_1["default"].copyFileSync("engine/vnengine.js", path_1["default"].join(config.destPath, "".concat(rname, ".js")));
+            fs_1["default"].copyFileSync("engine/vncore.css", path_1["default"].join(config.destPath, "".concat(rname, ".css")));
             result = result
                 .replace("vnengine.js", "".concat(rname, ".js"))
                 .replace("vncore.css", "".concat(rname, ".css"));

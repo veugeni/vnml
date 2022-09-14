@@ -21,5 +21,11 @@
     "htmlparser2": "^8.0.1",
     "http-server": "^14.1.1",
     "typescript": "^4.7.3"
-  }
+  },
+  "files": [
+    "engine/frame.template",
+    "engine/menu.template",
+    "engine/vnengine.js",
+    "engine/vncore.css"
+  ]
 }
