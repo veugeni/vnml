@@ -203,11 +203,15 @@ function build(source: string, options: any) {
       config.author = copyright.author;
       config.pageTitle = `${copyright.title} by ${copyright.author}`;
 
-      const frame = fs.readFileSync("engine/frame.template", {
+      const frameTemplate = require.resolve("./engine/frame.template");
+
+      const frame = fs.readFileSync(frameTemplate, {
         encoding: "utf8",
       });
 
-      const menu = fs.readFileSync("engine/menu.template", {
+      const menuTemplate = require.resolve("./engine/menu.template");
+
+      const menu = fs.readFileSync(menuTemplate, {
         encoding: "utf8",
       });
 
@@ -223,14 +227,13 @@ function build(source: string, options: any) {
         Math.random().toString(36).substring(2, 15) +
         Math.random().toString(23).substring(2, 5);
 
-      fs.copyFileSync(
-        "engine/vnengine.js",
-        path.join(config.destPath, `${rname}.js`)
-      );
-      fs.copyFileSync(
-        "engine/vncore.css",
-        path.join(config.destPath, `${rname}.css`)
-      );
+      const engine = require.resolve("./engine/vnengine.js");
+
+      fs.copyFileSync(engine, path.join(config.destPath, `${rname}.js`));
+
+      const csscore = require.resolve("./engine/vncore.css");
+
+      fs.copyFileSync(csscore, path.join(config.destPath, `${rname}.css`));
 
       result = result
         .replace("vnengine.js", `${rname}.js`)
