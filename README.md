@@ -8,27 +8,27 @@ Goals:
 
 1. **Pure HTML/JS game.**
 
-- The novel is stored directly in HTML file.
+   - The novel is stored directly in HTML file.
 
 2. **Complete portability.**
 
-- Plays in any browser, in any device, on any screen resolution.
-- No additional library needed, no particular OS or browser needed.
+   - Plays in any browser, in any device, on any screen resolution.
+   - No additional library needed, no particular OS or browser needed.
 
 3. **Resource sharing.**
 
-- Backgrounds, characters, musics and sound effects are internet resources.
-- Why? This is how the internet works, and should improve community built novels
-- and cooperation.
+   - Backgrounds, characters, musics and sound effects are internet resources.
+   - Why? This is how the internet works, and should improve community built novels
+   - and cooperation.
 
 4. **Easy to use.**
 
-- No coding required. Just write VNML in a file, you can use any kind of html editor for source highlighting, build, and share.
-- VNML compiler provides code checking and testing via embedded server.
+   - No coding required. Just write VNML in a file, you can use any kind of html editor for source highlighting, build, and share.
+   - VNML compiler provides code checking and testing via embedded server.
 
 5. **CSS Templates.**
 
-- Customization via additional css files.
+   - Customization via additional css files.
 
 ### What's (not) in 1.0.0.0 alpha 1 version
 
