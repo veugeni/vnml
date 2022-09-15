@@ -2,7 +2,9 @@
 
 ## Visual Novel Markup Language.
 
-An attempt for a pure HTML/JS Visual novels over the internet engine
+An attempt for a pure HTML/JS Visual novels over the internet engine.
+
+(What's a Visual Novel? Click [here](https://it.wikipedia.org/wiki/Visual_novel).)
 
 Goals:
 
@@ -53,9 +55,11 @@ or
 
 # An example
 
-VNML has the same syntax as HTML (please add a link here) but there is no need to know HTML, just a few tags and rules.
+VNML has the same syntax as HTML but there is no need to know HTML, just a few tags and rules. If you're curious about HTML take a look [here](https://www.codecademy.com/learn/learn-html).
+
 You can use a plain text editor but an HTML enabled one (like VS Code, or Notepad++) will provide useful code highlights and tags closure, and that's handy.
-For a complete VNML documentation refer to: (please put a link here to a proper manual).
+
+For a complete VNML documentation refer to the [VNML Manual](docs/vnmlmanual.md).
 
 Here the simplest VNML possible file, copy the code below and put it into a file named `test.vnml` into a folder you like:
 
