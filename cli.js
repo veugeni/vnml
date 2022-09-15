@@ -330,6 +330,7 @@ function checkSource(source) {
                         case "lb":
                         case "bgm":
                         case "sfx":
+                        case "end":
                             check1_1(name, "vn", false);
                             break;
                         case "p":

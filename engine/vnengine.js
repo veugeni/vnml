@@ -64,12 +64,13 @@ const context = {
     hasSound: "",
     wait: 0,
     waitTimeout: 0,
+    gameOver: false,
 };
 const Config = {
     typeWriterSpeed: 50,
     paragraphLimit: window.screen.width <= 736 ? 200 : 300,
     hiddenChoices: true,
-    version: "1.0",
+    version: "1.0.2",
     disableSave: false,
     showTokenDebug: true,
     showDebug: true,
@@ -200,6 +201,9 @@ function parse(e) {
             case "WAIT":
                 parseWait(e);
                 return true;
+            case "END":
+                parseEnd(e);
+                return false;
             default:
                 if (e.tagName !== "P") {
                     const model = seekTag(e.tagName);
@@ -286,7 +290,9 @@ function hideNextButton() {
     elements.nx.setAttribute("style", "display:none");
 }
 function showNextButton() {
-    elements.nx.setAttribute("style", "display:block");
+    if (context.gameOver === false) {
+        elements.nx.setAttribute("style", "display:block");
+    }
 }
 function hideChoices() {
     showNextButton();
@@ -378,21 +384,25 @@ function step() {
     }
 }
 function fetchParagraph() {
-    let fetchNext = true;
     let token = null;
     Config.showTokenDebug && console.log("fetch paragraph: ", context);
     context.toBeSaved.date = new Date().toISOString();
     context.toBeSaved.index = context.index;
     context.toBeSaved.variables = Object.assign({}, context.variables);
     let paragraphFound = false;
-    while (fetchNext && hasMoreTokens()) {
+    while (hasMoreTokens()) {
         token = getCurrentToken();
         Config.showTokenDebug && console.log("found token", token.tagName);
         if (paragraphFound) {
+            if (token.tagName === "END") {
+                Config.showTokenDebug && console.log("ending game", token.tagName);
+                parse(token);
+                setProgramCounter();
+                return;
+            }
             if (token.tagName !== "CH") {
                 Config.showTokenDebug && console.log("closing chapter", token.tagName);
                 setProgramCounter();
-                fetchNext = false;
                 return;
             }
         }
@@ -631,6 +641,10 @@ function parseWait(e) {
             }
         }
     }
+}
+function parseEnd(e) {
+    Config.showTokenDebug && console.log("parsing end!");
+    context.gameOver = true;
 }
 function seekTag(tag) {
     if (elements.vnd) {
