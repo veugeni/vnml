@@ -70,7 +70,7 @@ const Config = {
     typeWriterSpeed: 50,
     paragraphLimit: window.screen.width <= 736 ? 200 : 300,
     hiddenChoices: true,
-    version: "1.0.2",
+    version: "1.0.3",
     disableSave: false,
     showTokenDebug: true,
     showDebug: true,
@@ -252,15 +252,19 @@ function setBackgroundMusic(url) {
 }
 function moveTo(label) {
     if (label !== "") {
+        console.log("Seeking label ", label);
         for (let i = 0; i < elements.vn.children.length; i++) {
             const e = elements.vn.children[i];
+            console.log("element at " + i, e.tagName);
             if (e.tagName === "LB" && e.innerText === label) {
+                console.log("Found label " + label + " at " + i);
                 setProgramCounter(i + 1);
                 clearCharacters();
                 break;
             }
         }
     }
+    console.log("Moving to next step");
     context.state = "SEEK_PARAGRAPH";
     step();
 }
@@ -422,14 +426,19 @@ function clearCharacters() {
     context.toBeSaved.cl = "";
     context.toBeSaved.label = "";
 }
+function assetsUrl(resource) {
+    return resource
+        ? resource.indexOf("/") >= 0
+            ? resource
+            : `res/${resource}`
+        : "";
+}
 function parseBackground(e) {
     const style = parseStyleAttributes(e).join(" ");
     setBackgroundEffect("");
-    if (e.children.length === 1) {
-        const back = seekTag(e.children[0].tagName);
-        if (back) {
-            setBackground(back.querySelector("bk").innerText, style);
-        }
+    const backTag = seekTag(e.innerText);
+    if (backTag) {
+        setBackground(backTag.querySelector("bk").innerText, style);
     }
     else {
         setBackground(e.innerText, style);
@@ -442,7 +451,9 @@ function setBackgroundEffect(effect) {
 }
 function setBackground(url, style) {
     context.toBeSaved.bk = url;
-    elements.bg.setAttribute("style", (url === "" ? "background-image:none;" : `background-image:url(${url});`) +
+    elements.bg.setAttribute("style", (url === ""
+        ? "background-image:none;"
+        : `background-image:url(${assetsUrl(url)});`) +
         (style !== "" ? `filter: ${style};` : ""));
 }
 function setLabel(text) {
@@ -535,12 +546,10 @@ function parseEffectAttributes(e) {
 }
 function parseCharacter(e, w) {
     Config.showTokenDebug && console.log("parse char", e, w, context);
-    if (e.children.length === 1) {
-        const character = seekTag(e.children[0].tagName);
-        if (character) {
-            setCharacter(character.querySelector("bk").innerText, w, parseStyleAttributes(e));
-            setLabel(character.querySelector("nm").innerText);
-        }
+    const characterTag = seekTag(e.innerText);
+    if (characterTag) {
+        setCharacter(characterTag.querySelector("bk").innerText, w, parseStyleAttributes(e));
+        setLabel(characterTag.querySelector("nm").innerText);
     }
     else {
         setCharacter(e.innerText, w, parseStyleAttributes(e));
@@ -555,7 +564,8 @@ function setCharacter(url, w, styles) {
     context.toBeSaved[w] = url;
     elements[w].setAttribute("style", (url === ""
         ? "background-image:none; opacity: 0;"
-        : `background-image:url(${url}); opacity:1;`) + getCharacterStyle(styles));
+        : `background-image:url(${assetsUrl(url)}); opacity:1;`) +
+        getCharacterStyle(styles));
 }
 function collectText(e) {
     let buffer = "";
@@ -647,7 +657,7 @@ function parseEnd(e) {
     context.gameOver = true;
 }
 function seekTag(tag) {
-    if (elements.vnd) {
+    if (elements.vnd && tag && tag !== "") {
         for (var i = 0; i < elements.vnd.children.length; i++) {
             const e = elements.vnd.children[i];
             if (e.tagName === tag.toUpperCase()) {

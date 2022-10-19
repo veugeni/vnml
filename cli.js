@@ -38,11 +38,16 @@ program
 });
 program.parse();
 function getDefaultConfig(source, options) {
+    var ext = path_1["default"].extname(source);
+    var fullPath = source;
+    if (ext === "") {
+        fullPath = fullPath + ".vnml";
+    }
     return {
-        sourceFullPath: source,
-        sourcePath: path_1["default"].dirname(source),
-        sourceFileName: path_1["default"].basename(source),
-        sourceExt: path_1["default"].extname(source),
+        sourceFullPath: fullPath,
+        sourcePath: path_1["default"].dirname(fullPath),
+        sourceFileName: path_1["default"].basename(fullPath),
+        sourceExt: path_1["default"].extname(fullPath),
         destFileName: "",
         destExt: "",
         destPath: "",
@@ -276,6 +281,13 @@ function checkSource(source) {
                 return (0, errorCodes_1.addWarning)("WAR006", 0, "Attribute ".concat(e[0], " of ").concat(name, " is unknown."));
             });
         };
+        var isImageResource_1 = function (url) {
+            return [".jpeg", ".gif", ".png", ".apng", ".svg", ".bmp", ".ico", ".jpg"].filter(function (e) { return url.toLowerCase().endsWith(e); }).length > 0;
+        };
+        var isSoundResource_1 = function (url) {
+            return [".ogg", ".mp3", ".wav"].filter(function (e) { return url.toLowerCase().endsWith(e); })
+                .length > 0;
+        };
         var parser = new htmlparser2_1.Parser({
             onopentag: function (name, attributes) {
                 if (vnmlFound) {
@@ -390,6 +402,30 @@ function checkSource(source) {
                         break;
                     case "st":
                         title = text;
+                        break;
+                    case "bk":
+                        if (grandIs_1("vn") &&
+                            !characters.includes(text) &&
+                            !isImageResource_1(text)) {
+                            (0, errorCodes_1.addError)("ERR005", 0, "background ".concat(text, " is not a resource name or an image url"));
+                        }
+                        break;
+                    case "cl":
+                    case "cr":
+                    case "cm":
+                        if (!characters.includes(text) && !isImageResource_1(text)) {
+                            (0, errorCodes_1.addError)("ERR005", 0, "Character ".concat(text, " is not a character name or an image resource"));
+                        }
+                        break;
+                    case "bgm":
+                        if (!isSoundResource_1(text)) {
+                            (0, errorCodes_1.addError)("ERR005", 0, "Background music ".concat(text, " is not a sound resource"));
+                        }
+                        break;
+                    case "sfx":
+                        if (!isSoundResource_1(text)) {
+                            (0, errorCodes_1.addError)("ERR005", 0, "Sound effect ".concat(text, " is not a sound resource"));
+                        }
                         break;
                 }
             },

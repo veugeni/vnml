@@ -16,6 +16,7 @@ export const WarningsCodes = {
   WAR004: "Misplaced text",
   WAR005: "Inconsistent jump",
   WAR006: "Unknown attribute",
+  WAR007: "Check resource url",
 };
 
 export type VNMLError = keyof typeof ErrorCodes;

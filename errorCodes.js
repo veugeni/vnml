@@ -17,7 +17,8 @@ exports.WarningsCodes = {
     WAR003: "Multiple elements found",
     WAR004: "Misplaced text",
     WAR005: "Inconsistent jump",
-    WAR006: "Unknown attribute"
+    WAR006: "Unknown attribute",
+    WAR007: "Check resource url"
 };
 var checkResult = {
     errors: [],

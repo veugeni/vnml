@@ -131,7 +131,7 @@ const Config = {
   typeWriterSpeed: 50,
   paragraphLimit: window.screen.width <= 736 ? 200 : 300,
   hiddenChoices: true,
-  version: "1.0.2",
+  version: "1.0.3",
   disableSave: false,
   showTokenDebug: true,
   showDebug: true,
@@ -333,15 +333,23 @@ function setBackgroundMusic(url: string) {
 
 function moveTo(label: string) {
   if (label !== "") {
+    console.log("Seeking label ", label);
+
     for (let i = 0; i < elements.vn.children.length; i++) {
       const e = elements.vn.children[i] as HTMLElement;
+
+      console.log("element at " + i, e.tagName);
+
       if (e.tagName === "LB" && e.innerText === label) {
+        console.log("Found label " + label + " at " + i);
         setProgramCounter(i + 1);
         clearCharacters();
         break;
       }
     }
   }
+
+  console.log("Moving to next step");
 
   context.state = "SEEK_PARAGRAPH";
   step();
@@ -536,15 +544,22 @@ function clearCharacters() {
   context.toBeSaved.label = "";
 }
 
+function assetsUrl(resource: string) {
+  return resource
+    ? resource.indexOf("/") >= 0
+      ? resource
+      : `res/${resource}`
+    : "";
+}
+
 function parseBackground(e: HTMLElement) {
   const style = parseStyleAttributes(e).join(" ");
   setBackgroundEffect("");
 
-  if (e.children.length === 1) {
-    const back = seekTag(e.children[0].tagName);
-    if (back) {
-      setBackground(back.querySelector<HTMLElement>("bk").innerText, style);
-    }
+  const backTag = seekTag(e.innerText);
+
+  if (backTag) {
+    setBackground(backTag.querySelector<HTMLElement>("bk").innerText, style);
   } else {
     setBackground(e.innerText, style);
   }
@@ -562,7 +577,9 @@ function setBackground(url: string, style?: string) {
 
   elements.bg.setAttribute(
     "style",
-    (url === "" ? "background-image:none;" : `background-image:url(${url});`) +
+    (url === ""
+      ? "background-image:none;"
+      : `background-image:url(${assetsUrl(url)});`) +
       (style !== "" ? `filter: ${style};` : "")
   );
 }
@@ -681,16 +698,15 @@ function parseEffectAttributes(e: HTMLElement) {
 function parseCharacter(e: HTMLElement, w: "cl" | "cm" | "cr") {
   Config.showTokenDebug && console.log("parse char", e, w, context);
 
-  if (e.children.length === 1) {
-    const character = seekTag(e.children[0].tagName);
-    if (character) {
-      setCharacter(
-        character.querySelector<HTMLElement>("bk").innerText,
-        w,
-        parseStyleAttributes(e)
-      );
-      setLabel(character.querySelector<HTMLElement>("nm").innerText);
-    }
+  const characterTag = seekTag(e.innerText);
+
+  if (characterTag) {
+    setCharacter(
+      characterTag.querySelector<HTMLElement>("bk").innerText,
+      w,
+      parseStyleAttributes(e)
+    );
+    setLabel(characterTag.querySelector<HTMLElement>("nm").innerText);
   } else {
     setCharacter(e.innerText, w, parseStyleAttributes(e));
   }
@@ -712,7 +728,8 @@ function setCharacter(url: string, w: "cl" | "cm" | "cr", styles: string[]) {
     "style",
     (url === ""
       ? "background-image:none; opacity: 0;"
-      : `background-image:url(${url}); opacity:1;`) + getCharacterStyle(styles)
+      : `background-image:url(${assetsUrl(url)}); opacity:1;`) +
+      getCharacterStyle(styles)
   );
 }
 
@@ -819,7 +836,7 @@ function parseEnd(e: HTMLElement) {
 }
 
 function seekTag(tag: string) {
-  if (elements.vnd) {
+  if (elements.vnd && tag && tag !== "") {
     for (var i = 0; i < elements.vnd.children.length; i++) {
       const e = elements.vnd.children[i];
 

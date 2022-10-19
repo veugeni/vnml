@@ -60,11 +60,18 @@ interface Config {
 }
 
 function getDefaultConfig(source: string, options: any): Config {
+  const ext = path.extname(source);
+  let fullPath = source;
+
+  if (ext === "") {
+    fullPath = fullPath + ".vnml";
+  }
+
   return {
-    sourceFullPath: source,
-    sourcePath: path.dirname(source),
-    sourceFileName: path.basename(source),
-    sourceExt: path.extname(source),
+    sourceFullPath: fullPath,
+    sourcePath: path.dirname(fullPath),
+    sourceFileName: path.basename(fullPath),
+    sourceExt: path.extname(fullPath),
     destFileName: "",
     destExt: "",
     destPath: "",
@@ -357,6 +364,15 @@ function checkSource(source: string) {
         );
     };
 
+    const isImageResource = (url: string) =>
+      [".jpeg", ".gif", ".png", ".apng", ".svg", ".bmp", ".ico", ".jpg"].filter(
+        (e) => url.toLowerCase().endsWith(e)
+      ).length > 0;
+
+    const isSoundResource = (url: string) =>
+      [".ogg", ".mp3", ".wav"].filter((e) => url.toLowerCase().endsWith(e))
+        .length > 0;
+
     const parser = new Parser(
       {
         onopentag(name, attributes) {
@@ -496,6 +512,48 @@ function checkSource(source: string) {
               break;
             case "st":
               title = text;
+              break;
+            case "bk":
+              if (
+                grandIs("vn") &&
+                !characters.includes(text) &&
+                !isImageResource(text)
+              ) {
+                addError(
+                  "ERR005",
+                  0,
+                  `background ${text} is not a resource name or an image url`
+                );
+              }
+              break;
+            case "cl":
+            case "cr":
+            case "cm":
+              if (!characters.includes(text) && !isImageResource(text)) {
+                addError(
+                  "ERR005",
+                  0,
+                  `Character ${text} is not a character name or an image resource`
+                );
+              }
+              break;
+            case "bgm":
+              if (!isSoundResource(text)) {
+                addError(
+                  "ERR005",
+                  0,
+                  `Background music ${text} is not a sound resource`
+                );
+              }
+              break;
+            case "sfx":
+              if (!isSoundResource(text)) {
+                addError(
+                  "ERR005",
+                  0,
+                  `Sound effect ${text} is not a sound resource`
+                );
+              }
               break;
           }
         },
