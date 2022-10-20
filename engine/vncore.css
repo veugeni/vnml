@@ -178,6 +178,14 @@ body {
   z-index: 110;
 }
 
+.VNBackgroundFull {
+  height: 100vh;
+}
+
+.TextWindowHidden {
+  opacity: 0;
+}
+
 @keyframes flash1 {
   0% {
     opacity: 0;
@@ -410,6 +418,10 @@ body {
     max-width: 1600px;
     font-size: 48px;
   }
+
+  .VNBackgroundFull {
+    height: 100vh;
+  }
 }
 
 /* Schermi Desktop o Portatili */
@@ -441,6 +453,10 @@ body {
     font-size: 36px;
     max-width: 1280px;
   }
+
+  .VNBackgroundFull {
+    height: 100vh;
+  }
 }
 
 /* Tablet in modalità orizzontale */
@@ -468,6 +484,10 @@ body {
   }
 
   .VNTextScroller {
+  }
+
+  .VNBackgroundFull {
+    height: 100vh;
   }
 }
 
@@ -563,6 +583,11 @@ body {
       rgba(0, 0, 0, 1) 50%,
       rgba(0, 0, 0, 1) 100%
     );
+  }
+
+  .VNBackgroundFull {
+    height: 100vh;
+    background-size: auto;
   }
 }
 

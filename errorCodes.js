@@ -18,7 +18,8 @@ exports.WarningsCodes = {
     WAR004: "Misplaced text",
     WAR005: "Inconsistent jump",
     WAR006: "Unknown attribute",
-    WAR007: "Check resource url"
+    WAR007: "Check resource url",
+    WAR008: "Uknown variable"
 };
 var checkResult = {
     errors: [],

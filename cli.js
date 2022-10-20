@@ -228,10 +228,12 @@ function checkSource(source) {
     var characters = [];
     var labels = [];
     var jumps = [];
+    var variables = [];
     var chapters = 0;
     var choices = 0;
     var title = "Unknown title";
     var author = "Unknown author";
+    var hasTextValue = false;
     try {
         var parentIs_1 = function (name) {
             return (nodeStack.length > 0 ? nodeStack[nodeStack.length - 1].name : "") ===
@@ -288,9 +290,13 @@ function checkSource(source) {
             return [".ogg", ".mp3", ".wav"].filter(function (e) { return url.toLowerCase().endsWith(e); })
                 .length > 0;
         };
+        var isKnownVariable_1 = function (variable) {
+            return variable !== "" ? variables.includes(variable) : true;
+        };
         var parser = new htmlparser2_1.Parser({
             onopentag: function (name, attributes) {
                 if (vnmlFound) {
+                    hasTextValue = false;
                     switch (name) {
                         case "vnml":
                             (0, errorCodes_1.addError)("ERR003", 0, "Main node (VNML)");
@@ -333,6 +339,12 @@ function checkSource(source) {
                             check1_1(name, "vn", false);
                             choices++;
                             break;
+                        case "hideifzero":
+                        case "showifzero":
+                        case "showifnonzero":
+                        case "hideifnonzero":
+                            check1_1(name, "ch", false);
+                            break;
                         case "cr":
                         case "cl":
                         case "cm":
@@ -350,8 +362,13 @@ function checkSource(source) {
                             check1_1(name, "vn", false);
                             break;
                         case "wait":
+                        case "end":
                             check1_1(name, "vn", false);
-                            checkValidAttributes_1(name, attributes, ["key"], true);
+                            break;
+                        case "inc":
+                        case "dec":
+                        case "clr":
+                            check1_1(name, "vn", false);
                             break;
                         default:
                             // Not reserved words
@@ -387,6 +404,7 @@ function checkSource(source) {
                 pushNode_1(name);
             },
             ontext: function (text) {
+                hasTextValue = true;
                 switch (getParent_1()) {
                     case "lb":
                         if (labels.includes(text)) {
@@ -427,9 +445,55 @@ function checkSource(source) {
                             (0, errorCodes_1.addError)("ERR005", 0, "Sound effect ".concat(text, " is not a sound resource"));
                         }
                         break;
+                    case "wait":
+                        var secs = parseInt(text);
+                        if (text !== "key" && (isNaN(secs) || secs <= 0 || secs > 60)) {
+                            (0, errorCodes_1.addError)("ERR005", 0, "Wait tag must specify a time in seconds between 1 and 60 or 'key'");
+                        }
+                        break;
+                    case "end":
+                        if (!isKnownVariable_1(text)) {
+                            (0, errorCodes_1.addWarning)("WAR008", 0, "Variable ".concat(text, " specified in end tag is unknown or not yet defined"));
+                        }
+                        break;
+                    case "hideifzero":
+                    case "showifzero":
+                    case "showifnonzero":
+                    case "hideifnonzero":
+                        if (!isKnownVariable_1(text)) {
+                            (0, errorCodes_1.addWarning)("WAR008", 0, "Variable ".concat(text, " specified in ").concat(getParent_1(), " tag is unknown or not yet defined"));
+                        }
+                        break;
+                    case "inc":
+                    case "dec":
+                    case "clr":
+                        if (text !== "") {
+                            variables.push(text);
+                        }
+                        else {
+                            (0, errorCodes_1.addError)("ERR005", 0, "".concat(getParent_1(), " tag must specify a variable name"));
+                        }
+                        break;
                 }
             },
             onclosetag: function (tagname) {
+                switch (tagname) {
+                    case "wait":
+                        if (!hasTextValue) {
+                            (0, errorCodes_1.addError)("ERR005", 0, "Wait tag must specify a time in seconds between 1 and 60 or 'key'");
+                        }
+                    case "hideifzero":
+                    case "showifzero":
+                    case "showifnonzero":
+                    case "hideifnonzero":
+                    case "inc":
+                    case "dec":
+                    case "clr":
+                        if (!hasTextValue) {
+                            (0, errorCodes_1.addError)("ERR005", 0, "".concat(tagname, " must specify a variable name"));
+                        }
+                        break;
+                }
                 var node = popNode_1();
                 if ((node === null || node === void 0 ? void 0 : node.name) !== tagname) {
                     (0, errorCodes_1.addError)("ERR005", 0, "misplaced closing tag ".concat(tagname, " needed ").concat(node === null || node === void 0 ? void 0 : node.name));
@@ -448,6 +512,9 @@ function checkSource(source) {
         console.log("");
         console.log("Labels");
         labels.forEach(function (e) { return console.log("- ".concat(e)); });
+        console.log("");
+        console.log("Variables");
+        variables.forEach(function (e) { return console.log("- ".concat(e)); });
         console.log("");
         console.log("Total number of jumps: ".concat(jumps.length));
         console.log("Total number of choices: ".concat(choices));

@@ -24,6 +24,7 @@ const EffectAttributes = {
 const elements = {
     bg: null,
     bgf: null,
+    bgo: null,
     cl: null,
     cm: null,
     cr: null,
@@ -35,6 +36,7 @@ const elements = {
     chf: null,
     chfc: null,
     tw: null,
+    bc: null,
     nx: null,
     ms: null,
     sd: null,
@@ -65,6 +67,7 @@ const context = {
     wait: 0,
     waitTimeout: 0,
     gameOver: false,
+    finalScore: 0,
 };
 const Config = {
     typeWriterSpeed: 50,
@@ -102,6 +105,7 @@ function startup() {
         elements.vnd = document.querySelector("vnd");
         elements.bg = document.querySelector(".VNBackground");
         elements.bgf = document.querySelector(".VNBackgroundEffects");
+        elements.bgo = document.querySelector(".VNBackgroundOverlay");
         elements.cl = document.querySelector(".VNCAnchorLeft");
         elements.cm = document.querySelector(".VNCAnchorMiddle");
         elements.cr = document.querySelector(".VNCAnchorRight");
@@ -110,6 +114,7 @@ function startup() {
         elements.ch = document.querySelector(".VNChooseScroller");
         elements.chf = document.querySelector(".VNChooseScroller");
         elements.chfc = document.querySelector(".VNChooseWindow");
+        elements.bc = document.querySelector(".VNBottomContainer");
         elements.tw = document.querySelector(".VNTextWindow");
         elements.nx = document.querySelector(".VNTextWindowProceed");
         context.index = 0;
@@ -463,7 +468,9 @@ function setLabel(text) {
     elements.lb.setAttribute("style", `display:${text === "" ? "none" : "block"}`);
 }
 function showTextWindow(show) {
-    elements.tw.setAttribute("style", `display:${show ? "block" : "none"}`);
+    elements.bc.setAttribute("class", `VNBottomContainer BottomStyle ${show ? "" : "TextWindowHidden"}`);
+    elements.bgo.setAttribute("class", `VNBackground VNBackgroundOverlay ${show ? "" : "TextWindowHidden"}`);
+    elements.bg.setAttribute("class", `VNBackground ${show ? "" : "VNBackgroundFull"}`);
 }
 function setParagraph(text) {
     context.lines = splitInLines(text);
@@ -630,31 +637,24 @@ function parseChoice(e) {
 }
 function parseWait(e) {
     Config.showTokenDebug && console.log("parsing wait");
-    for (let i = 0; i < e.attributes.length; i++) {
-        const attr = e.attributes.item(i);
-        if (attr) {
-            if (attr.name.toLowerCase() === "key") {
-                showTextWindow(false);
-                setParagraph("");
-                context.wait = -1;
-                break;
-            }
-            else {
-                const num = parseInt(attr.name);
-                if (num && num > 0) {
-                    showTextWindow(false);
-                    setParagraph("");
-                    console.log("Setting timeout", num);
-                    context.wait = num;
-                }
-                break;
-            }
-        }
+    const waitWhat = e.innerText;
+    let secs = parseInt(waitWhat);
+    if (waitWhat === "key" || secs <= 0 || secs > 60) {
+        secs = -1;
     }
+    showTextWindow(false);
+    setParagraph("");
+    Config.showTokenDebug && console.log("Setting wait", secs);
+    context.wait = secs;
 }
 function parseEnd(e) {
     Config.showTokenDebug && console.log("parsing end!");
     context.gameOver = true;
+    if (e.innerText && context.variables[e.innerText]) {
+        Config.showTokenDebug &&
+            console.log("found score variable " + e.innerText, context.variables[e.innerText]);
+        context.finalScore = context.variables[e.innerText];
+    }
 }
 function seekTag(tag) {
     if (elements.vnd && tag && tag !== "") {

@@ -31,6 +31,7 @@ type UIElement = HTMLElement | null;
 interface Elements {
   bg: UIElement;
   bgf: UIElement;
+  bgo: UIElement;
   cl: UIElement;
   cm: UIElement;
   cr: UIElement;
@@ -42,6 +43,7 @@ interface Elements {
   chf: UIElement;
   chfc: UIElement;
   tw: UIElement;
+  bc: UIElement;
   nx: UIElement;
   ms: HTMLAudioElement | null;
   sd: HTMLAudioElement | null;
@@ -51,6 +53,7 @@ interface Elements {
 const elements: Elements = {
   bg: null,
   bgf: null,
+  bgo: null,
   cl: null,
   cm: null,
   cr: null,
@@ -62,6 +65,7 @@ const elements: Elements = {
   chf: null,
   chfc: null,
   tw: null,
+  bc: null,
   nx: null,
   ms: null,
   sd: null,
@@ -73,34 +77,7 @@ interface Choice {
   next: string;
 }
 
-interface Context {
-  index: number;
-  lines: string[];
-  variables: any;
-  subPage: number;
-  title: string;
-  author: string;
-  saveToken: string;
-  state: States;
-  cursor: number;
-  typeWriter: number;
-  twTextIndex: number;
-  isWriting: boolean;
-  writingText: string;
-  choices: Choice[];
-  subPagesEnded: boolean;
-  toBeSaved: Slot | null;
-  slot: number;
-  muted: boolean;
-  fullscreen: boolean;
-  hasMusic: string;
-  hasSound: string;
-  wait: number;
-  waitTimeout: number;
-  gameOver: boolean;
-}
-
-const context: Context = {
+const context = {
   index: 0,
   lines: [],
   variables: {},
@@ -125,6 +102,7 @@ const context: Context = {
   wait: 0,
   waitTimeout: 0,
   gameOver: false,
+  finalScore: 0,
 };
 
 const Config = {
@@ -167,6 +145,7 @@ function startup() {
     elements.vnd = document.querySelector("vnd");
     elements.bg = document.querySelector(".VNBackground");
     elements.bgf = document.querySelector(".VNBackgroundEffects");
+    elements.bgo = document.querySelector(".VNBackgroundOverlay");
     elements.cl = document.querySelector(".VNCAnchorLeft");
     elements.cm = document.querySelector(".VNCAnchorMiddle");
     elements.cr = document.querySelector(".VNCAnchorRight");
@@ -175,6 +154,7 @@ function startup() {
     elements.ch = document.querySelector(".VNChooseScroller");
     elements.chf = document.querySelector(".VNChooseScroller");
     elements.chfc = document.querySelector(".VNChooseWindow");
+    elements.bc = document.querySelector(".VNBottomContainer");
     elements.tw = document.querySelector(".VNTextWindow");
     elements.nx = document.querySelector(".VNTextWindowProceed");
 
@@ -595,7 +575,18 @@ function setLabel(text: string) {
 }
 
 function showTextWindow(show: boolean) {
-  elements.tw.setAttribute("style", `display:${show ? "block" : "none"}`);
+  elements.bc.setAttribute(
+    "class",
+    `VNBottomContainer BottomStyle ${show ? "" : "TextWindowHidden"}`
+  );
+  elements.bgo.setAttribute(
+    "class",
+    `VNBackground VNBackgroundOverlay ${show ? "" : "TextWindowHidden"}`
+  );
+  elements.bg.setAttribute(
+    "class",
+    `VNBackground ${show ? "" : "VNBackgroundFull"}`
+  );
 }
 
 function setParagraph(text: string) {
@@ -807,32 +798,32 @@ function parseChoice(e: HTMLElement) {
 
 function parseWait(e: HTMLElement) {
   Config.showTokenDebug && console.log("parsing wait");
+  const waitWhat = e.innerText;
+  let secs = parseInt(waitWhat);
 
-  for (let i = 0; i < e.attributes.length; i++) {
-    const attr = e.attributes.item(i);
-    if (attr) {
-      if (attr.name.toLowerCase() === "key") {
-        showTextWindow(false);
-        setParagraph("");
-        context.wait = -1;
-        break;
-      } else {
-        const num = parseInt(attr.name);
-        if (num && num > 0) {
-          showTextWindow(false);
-          setParagraph("");
-          console.log("Setting timeout", num);
-          context.wait = num;
-        }
-        break;
-      }
-    }
+  if (waitWhat === "key" || secs <= 0 || secs > 60) {
+    secs = -1;
   }
+
+  showTextWindow(false);
+  setParagraph("");
+  Config.showTokenDebug && console.log("Setting wait", secs);
+  context.wait = secs;
 }
 
 function parseEnd(e: HTMLElement) {
   Config.showTokenDebug && console.log("parsing end!");
   context.gameOver = true;
+
+  if (e.innerText && context.variables[e.innerText]) {
+    Config.showTokenDebug &&
+      console.log(
+        "found score variable " + e.innerText,
+        context.variables[e.innerText]
+      );
+
+    context.finalScore = context.variables[e.innerText];
+  }
 }
 
 function seekTag(tag: string) {

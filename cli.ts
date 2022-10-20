@@ -302,10 +302,12 @@ function checkSource(source: string) {
   const characters: string[] = [];
   const labels: string[] = [];
   const jumps: string[] = [];
+  const variables: string[] = [];
   let chapters = 0;
   let choices = 0;
   let title = "Unknown title";
   let author = "Unknown author";
+  let hasTextValue = false;
 
   try {
     const parentIs = (name: string) =>
@@ -373,10 +375,15 @@ function checkSource(source: string) {
       [".ogg", ".mp3", ".wav"].filter((e) => url.toLowerCase().endsWith(e))
         .length > 0;
 
+    const isKnownVariable = (variable: string) =>
+      variable !== "" ? variables.includes(variable) : true;
+
     const parser = new Parser(
       {
         onopentag(name, attributes) {
           if (vnmlFound) {
+            hasTextValue = false;
+
             switch (name) {
               case "vnml":
                 addError("ERR003", 0, "Main node (VNML)");
@@ -438,6 +445,12 @@ function checkSource(source: string) {
                 check1(name, "vn", false);
                 choices++;
                 break;
+              case "hideifzero":
+              case "showifzero":
+              case "showifnonzero":
+              case "hideifnonzero":
+                check1(name, "ch", false);
+                break;
               case "cr":
               case "cl":
               case "cm":
@@ -460,8 +473,13 @@ function checkSource(source: string) {
                 check1(name, "vn", false);
                 break;
               case "wait":
+              case "end":
                 check1(name, "vn", false);
-                checkValidAttributes(name, attributes, ["key"], true);
+                break;
+              case "inc":
+              case "dec":
+              case "clr":
+                check1(name, "vn", false);
                 break;
               default:
                 // Not reserved words
@@ -497,6 +515,8 @@ function checkSource(source: string) {
           pushNode(name);
         },
         ontext(text) {
+          hasTextValue = true;
+
           switch (getParent()) {
             case "lb":
               if (labels.includes(text)) {
@@ -555,9 +575,80 @@ function checkSource(source: string) {
                 );
               }
               break;
+            case "wait":
+              const secs = parseInt(text);
+
+              if (text !== "key" && (isNaN(secs) || secs <= 0 || secs > 60)) {
+                addError(
+                  "ERR005",
+                  0,
+                  `Wait tag must specify a time in seconds between 1 and 60 or 'key'`
+                );
+              }
+              break;
+            case "end":
+              if (!isKnownVariable(text)) {
+                addWarning(
+                  "WAR008",
+                  0,
+                  `Variable ${text} specified in end tag is unknown or not yet defined`
+                );
+              }
+              break;
+            case "hideifzero":
+            case "showifzero":
+            case "showifnonzero":
+            case "hideifnonzero":
+              if (!isKnownVariable(text)) {
+                addWarning(
+                  "WAR008",
+                  0,
+                  `Variable ${text} specified in ${getParent()} tag is unknown or not yet defined`
+                );
+              }
+              break;
+            case "inc":
+            case "dec":
+            case "clr":
+              if (text !== "") {
+                variables.push(text);
+              } else {
+                addError(
+                  "ERR005",
+                  0,
+                  `${getParent()} tag must specify a variable name`
+                );
+              }
+              break;
           }
         },
         onclosetag(tagname) {
+          switch (tagname) {
+            case "wait":
+              if (!hasTextValue) {
+                addError(
+                  "ERR005",
+                  0,
+                  `Wait tag must specify a time in seconds between 1 and 60 or 'key'`
+                );
+              }
+            case "hideifzero":
+            case "showifzero":
+            case "showifnonzero":
+            case "hideifnonzero":
+            case "inc":
+            case "dec":
+            case "clr":
+              if (!hasTextValue) {
+                addError(
+                  "ERR005",
+                  0,
+                  `${tagname} must specify a variable name`
+                );
+              }
+              break;
+          }
+
           const node = popNode();
           if (node?.name !== tagname) {
             addError(
@@ -585,6 +676,9 @@ function checkSource(source: string) {
     console.log("");
     console.log("Labels");
     labels.forEach((e) => console.log(`- ${e}`));
+    console.log("");
+    console.log("Variables");
+    variables.forEach((e) => console.log(`- ${e}`));
     console.log("");
     console.log(`Total number of jumps: ${jumps.length}`);
     console.log(`Total number of choices: ${choices}`);

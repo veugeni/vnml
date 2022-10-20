@@ -25,7 +25,7 @@ Goals:
 
 4. **Easy to use.**
 
-   - No coding required. Just write VNML in a file, you can use any kind of html editor for source highlighting, build, and share. VNML compiler provides code checking and testing via embedded server.
+   - No coding required. Just write VNML in a file, (you can use any kind of html editor for source highlighting), build, and share. VNML compiler provides code checking and testing via embedded server.
 
 5. **CSS Templates.**
 
@@ -57,7 +57,7 @@ or
 
 VNML has the same syntax as HTML but there is no need to know HTML, just a few tags and rules. If you're curious about HTML take a look [here](https://www.codecademy.com/learn/learn-html).
 
-You can use a plain text editor but an HTML enabled one (like VS Code, or Notepad++) will provide useful code highlights and tags closure, and that's handy.
+You can use a plain text editor but an HTML enabled one (like VS Code, or Notepad++) will provide useful code highlights and tags closure and that's handy.
 
 For a complete VNML documentation refer to the [VNML Manual](docs/vnmlmanual.md).
 
