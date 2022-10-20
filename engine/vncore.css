@@ -729,9 +729,9 @@ body {
   align-items: center;
   flex-direction: row;
   justify-content: center;
-  color: white;
+  color: black;
   text-align: center;
-  margin-top: 1em;
+  margin-top: 3em;
 }
 
 .VNMAuthor {
@@ -741,7 +741,7 @@ body {
   align-items: center;
   flex-direction: row;
   justify-content: center;
-  color: white;
+  color: black;
   text-align: center;
   margin-top: 0.5em;
 }
@@ -753,13 +753,15 @@ body {
   align-items: center;
   flex-direction: row;
   justify-content: center;
-  color: white;
+  color: black;
   cursor: pointer;
   margin-top: 1em;
+  padding-left: 16px;
+  padding-right: 16px;
 }
 
 .VNMText {
-  color: white;
+  color: black;
 }
 
 .VNMText:hover {
@@ -768,7 +770,7 @@ body {
 
 .VNMDate {
   font-size: small;
-  color: white;
+  color: black;
   display: block;
 }
 
@@ -779,7 +781,7 @@ body {
   align-items: center;
   flex-direction: row;
   justify-content: center;
-  color: white;
+  color: black;
   cursor: pointer;
   width: 48px;
   height: 48px;

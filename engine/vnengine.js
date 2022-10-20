@@ -470,6 +470,7 @@ function setLabel(text) {
 function showTextWindow(show) {
     elements.bc.setAttribute("class", `VNBottomContainer BottomStyle ${show ? "" : "TextWindowHidden"}`);
     elements.bgo.setAttribute("class", `VNBackground VNBackgroundOverlay ${show ? "" : "TextWindowHidden"}`);
+    elements.bgf.setAttribute("class", `VNBackground VNBackgroundEffects ${show ? "" : "VNBackgroundFull"}`);
     elements.bg.setAttribute("class", `VNBackground ${show ? "" : "VNBackgroundFull"}`);
 }
 function setParagraph(text) {
@@ -709,14 +710,14 @@ function toggleAudio() {
 }
 function addFrontend() {
     const template = `
-      <div class="VNBackground">
-        <div class="VNBackground VNBackgroundEffects"></div>
-        <div class="VNBackground VNBackgroundOverlay"></div>
+      <div class="VNBackground VNBackgroundFull">
+        <div class="VNBackground VNBackgroundEffects VNBackgroundFull"></div>
+        <div class="VNBackground VNBackgroundOverlay TextWindowHidden"></div>
       </div>
       <div class="VNCharacter VNCAnchorRight"></div>
       <div class="VNCharacter VNCAnchorLeft"></div>
       <div class="VNCharacter VNCAnchorMiddle"></div>
-      <div class="VNBottomContainer BottomStyle">
+      <div class="VNBottomContainer BottomStyle TextWindowHidden">
         <div class="VNTextWindow disable-select ChapterStyle" onclick="step()">
           <div class="VNTextWindowLabel disable-select LabelStyle"></div>
           <div class="VNTextScroller disable-select TextStyle"></div>
@@ -844,6 +845,7 @@ function load(slot) {
         if (read && slot >= 0 && slot < read.slots.length) {
             const data = read.slots[slot];
             console.log("Slot loaded", data);
+            showTextWindow(true);
             setBackgroundMusic(data.bgm);
             setBackground(data.bk);
             setCharacter(data.cr, "cr", []);

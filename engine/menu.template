@@ -21,7 +21,10 @@
   </head>
 
   <body onload="menu(`$TITLE$`)">
-    <div class="VNMBackground">
+    <div
+      class="VNMBackground VNBackgroundFull"
+      style="background-image: url($MENUBACKGROUND$)"
+    >
       <div class="VNMTitle">$TITLE$</div>
       <div class="VNMAuthor">$AUTHOR$</div>
     </div>

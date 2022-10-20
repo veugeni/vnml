@@ -55,7 +55,8 @@ function getDefaultConfig(source, options) {
         title: "Unspecified...",
         author: "Unspecified...",
         pageTitle: "VNML Game",
-        port: options.port || "8080"
+        port: options.port || "8080",
+        menuBackground: ""
     };
 }
 function checkSourceExistance(config) {
@@ -152,7 +153,7 @@ function build(source, options) {
                 encoding: "utf8"
             });
             console.log("Checking source...");
-            var copyright = checkSource(sourceVnml);
+            var parsed = checkSource(sourceVnml);
             console.log("");
             (0, errorCodes_1.showCheckResults)();
             console.log("");
@@ -160,9 +161,10 @@ function build(source, options) {
                 process.exit(1);
             }
             console.log("Building package...");
-            config.title = copyright.title;
-            config.author = copyright.author;
-            config.pageTitle = "".concat(copyright.title, " by ").concat(copyright.author);
+            config.title = parsed.title;
+            config.author = parsed.author;
+            config.pageTitle = "".concat(parsed.title, " by ").concat(parsed.author);
+            config.menuBackground = parsed.menuResource;
             var frameTemplate = require.resolve("./engine/frame.template");
             var frame = fs_1["default"].readFileSync(frameTemplate, {
                 encoding: "utf8"
@@ -189,7 +191,8 @@ function build(source, options) {
             menuResult = menuResult
                 .replace("vnengine.js", "".concat(rname, ".js"))
                 .replace("vncore.css", "".concat(rname, ".css"))
-                .replace("$DESTINATION$", "./".concat(rname, ".html"));
+                .replace("$DESTINATION$", "./".concat(rname, ".html"))
+                .replace("$MENUBACKGROUND$", assetsUrl(config.menuBackground));
             fs_1["default"].writeFileSync(config.destFullPath, menuResult);
             result = result
                 .replace("$ITSAME$", sourceVnml)
@@ -225,15 +228,18 @@ function checkSource(source) {
     (0, errorCodes_1.clearCheckResults)();
     var nodeStack = [];
     var vnmlFound = false;
-    var characters = [];
-    var labels = [];
-    var jumps = [];
-    var variables = [];
-    var chapters = 0;
-    var choices = 0;
-    var title = "Unknown title";
-    var author = "Unknown author";
     var hasTextValue = false;
+    var parsed = {
+        menuResource: "",
+        title: "Unknown title",
+        author: "Unknown author",
+        characters: [],
+        labels: [],
+        jumps: [],
+        variables: [],
+        chapters: 0,
+        choices: 0
+    };
     try {
         var parentIs_1 = function (name) {
             return (nodeStack.length > 0 ? nodeStack[nodeStack.length - 1].name : "") ===
@@ -291,7 +297,12 @@ function checkSource(source) {
                 .length > 0;
         };
         var isKnownVariable_1 = function (variable) {
-            return variable !== "" ? variables.includes(variable) : true;
+            return variable !== "" ? parsed.variables.includes(variable) : true;
+        };
+        var addVariable_1 = function (variable) {
+            return variable !== "" &&
+                !parsed.variables.includes(variable) &&
+                parsed.variables.push(variable);
         };
         var parser = new htmlparser2_1.Parser({
             onopentag: function (name, attributes) {
@@ -337,7 +348,7 @@ function checkSource(source) {
                             break;
                         case "ch":
                             check1_1(name, "vn", false);
-                            choices++;
+                            parsed.choices++;
                             break;
                         case "hideifzero":
                         case "showifzero":
@@ -358,7 +369,7 @@ function checkSource(source) {
                             check1_1(name, "vn", false);
                             break;
                         case "p":
-                            chapters++;
+                            parsed.chapters++;
                             check1_1(name, "vn", false);
                             break;
                         case "wait":
@@ -374,14 +385,14 @@ function checkSource(source) {
                             // Not reserved words
                             if (parentIs_1("vnd")) {
                                 // It's a character definition
-                                if (characters.includes(name)) {
+                                if (parsed.characters.includes(name)) {
                                     (0, errorCodes_1.addError)("ERR006", 0, "Reference ".concat(name, " already defined."));
                                 }
-                                characters.push(name);
+                                parsed.characters.push(name);
                             }
                             else if (parentIs_1("vn")) {
                                 // It's a paragraph
-                                chapters++;
+                                parsed.chapters++;
                             }
                             else if (parentIs_1("cr") ||
                                 parentIs_1("cm") ||
@@ -407,31 +418,39 @@ function checkSource(source) {
                 hasTextValue = true;
                 switch (getParent_1()) {
                     case "lb":
-                        if (labels.includes(text)) {
+                        if (parsed.labels.includes(text)) {
                             (0, errorCodes_1.addError)("ERR007", 0, "".concat(text, " is duplicated"));
                         }
-                        labels.push(text);
+                        parsed.labels.push(text);
                         break;
                     case "gt":
-                        jumps.push(text);
+                        parsed.jumps.push(text);
                         break;
                     case "au":
-                        author = text;
+                        parsed.author = text;
                         break;
                     case "st":
-                        title = text;
+                        parsed.title = text;
                         break;
                     case "bk":
                         if (grandIs_1("vn") &&
-                            !characters.includes(text) &&
+                            !parsed.characters.includes(text) &&
                             !isImageResource_1(text)) {
                             (0, errorCodes_1.addError)("ERR005", 0, "background ".concat(text, " is not a resource name or an image url"));
+                            return;
+                        }
+                        if (!grandIs_1("vn") && !isImageResource_1(text)) {
+                            (0, errorCodes_1.addError)("ERR005", 0, "background ".concat(text, " is not an image url"));
+                            return;
+                        }
+                        if (grandIs_1("menu")) {
+                            parsed.menuResource = text;
                         }
                         break;
                     case "cl":
                     case "cr":
                     case "cm":
-                        if (!characters.includes(text) && !isImageResource_1(text)) {
+                        if (!parsed.characters.includes(text) && !isImageResource_1(text)) {
                             (0, errorCodes_1.addError)("ERR005", 0, "Character ".concat(text, " is not a character name or an image resource"));
                         }
                         break;
@@ -468,7 +487,7 @@ function checkSource(source) {
                     case "dec":
                     case "clr":
                         if (text !== "") {
-                            variables.push(text);
+                            addVariable_1(text);
                         }
                         else {
                             (0, errorCodes_1.addError)("ERR005", 0, "".concat(getParent_1(), " tag must specify a variable name"));
@@ -502,32 +521,34 @@ function checkSource(source) {
         }, { lowerCaseTags: true, recognizeSelfClosing: true });
         parser.write(source);
         parser.end();
-        jumps.forEach(function (e) {
-            if (!labels.includes(e)) {
+        parsed.jumps.forEach(function (e) {
+            if (!parsed.labels.includes(e)) {
                 (0, errorCodes_1.addWarning)("WAR005", 0, "Jump to ".concat(e, " have no corresponding label"));
             }
         });
         console.log("References");
-        characters.forEach(function (e) { return console.log("- ".concat(e)); });
+        parsed.characters.forEach(function (e) { return console.log("- ".concat(e)); });
         console.log("");
         console.log("Labels");
-        labels.forEach(function (e) { return console.log("- ".concat(e)); });
+        parsed.labels.forEach(function (e) { return console.log("- ".concat(e)); });
         console.log("");
         console.log("Variables");
-        variables.forEach(function (e) { return console.log("- ".concat(e)); });
+        parsed.variables.forEach(function (e) { return console.log("- ".concat(e)); });
         console.log("");
-        console.log("Total number of jumps: ".concat(jumps.length));
-        console.log("Total number of choices: ".concat(choices));
-        console.log("Total number of chapters: ".concat(chapters));
+        console.log("Menu background: ".concat(parsed.menuResource));
         console.log("");
-        console.log("Title: ".concat(title, ", Author: ").concat(author));
+        console.log("Total number of jumps: ".concat(parsed.jumps.length));
+        console.log("Total number of choices: ".concat(parsed.choices));
+        console.log("Total number of chapters: ".concat(parsed.chapters));
+        console.log("");
+        console.log("Title: ".concat(parsed.title, ", Author: ").concat(parsed.author));
         console.log("");
     }
     catch (err) {
         console.log("Error in syntax checking: ", err);
         (0, errorCodes_1.addError)("ERR000", 0, "");
     }
-    return { title: title, author: author };
+    return parsed;
 }
 function replaceAll(text, search, what) {
     var result = text + "";
@@ -535,4 +556,11 @@ function replaceAll(text, search, what) {
         result = result.replace(search, what);
     }
     return result;
+}
+function assetsUrl(resource) {
+    return resource
+        ? resource.indexOf("/") >= 0
+            ? resource
+            : "res/".concat(resource)
+        : "";
 }

@@ -57,6 +57,7 @@ interface Config {
   author: string;
   pageTitle: string;
   port: string;
+  menuBackground: string;
 }
 
 function getDefaultConfig(source: string, options: any): Config {
@@ -80,6 +81,7 @@ function getDefaultConfig(source: string, options: any): Config {
     author: "Unspecified...",
     pageTitle: "VNML Game",
     port: options.port || "8080",
+    menuBackground: "",
   };
 }
 
@@ -195,7 +197,7 @@ function build(source: string, options: any) {
       });
 
       console.log("Checking source...");
-      const copyright = checkSource(sourceVnml);
+      const parsed = checkSource(sourceVnml);
 
       console.log("");
       showCheckResults();
@@ -206,9 +208,10 @@ function build(source: string, options: any) {
       }
 
       console.log("Building package...");
-      config.title = copyright.title;
-      config.author = copyright.author;
-      config.pageTitle = `${copyright.title} by ${copyright.author}`;
+      config.title = parsed.title;
+      config.author = parsed.author;
+      config.pageTitle = `${parsed.title} by ${parsed.author}`;
+      config.menuBackground = parsed.menuResource;
 
       const frameTemplate = require.resolve("./engine/frame.template");
 
@@ -249,7 +252,8 @@ function build(source: string, options: any) {
       menuResult = menuResult
         .replace("vnengine.js", `${rname}.js`)
         .replace("vncore.css", `${rname}.css`)
-        .replace("$DESTINATION$", `./${rname}.html`);
+        .replace("$DESTINATION$", `./${rname}.html`)
+        .replace("$MENUBACKGROUND$", assetsUrl(config.menuBackground));
       fs.writeFileSync(config.destFullPath, menuResult);
 
       result = result
@@ -299,15 +303,19 @@ function checkSource(source: string) {
   clearCheckResults();
   const nodeStack: NodeStackElement[] = [];
   let vnmlFound: boolean = false;
-  const characters: string[] = [];
-  const labels: string[] = [];
-  const jumps: string[] = [];
-  const variables: string[] = [];
-  let chapters = 0;
-  let choices = 0;
-  let title = "Unknown title";
-  let author = "Unknown author";
   let hasTextValue = false;
+
+  const parsed = {
+    menuResource: "",
+    title: "Unknown title",
+    author: "Unknown author",
+    characters: [] as string[],
+    labels: [] as string[],
+    jumps: [] as string[],
+    variables: [] as string[],
+    chapters: 0,
+    choices: 0,
+  };
 
   try {
     const parentIs = (name: string) =>
@@ -376,7 +384,12 @@ function checkSource(source: string) {
         .length > 0;
 
     const isKnownVariable = (variable: string) =>
-      variable !== "" ? variables.includes(variable) : true;
+      variable !== "" ? parsed.variables.includes(variable) : true;
+
+    const addVariable = (variable: string) =>
+      variable !== "" &&
+      !parsed.variables.includes(variable) &&
+      parsed.variables.push(variable);
 
     const parser = new Parser(
       {
@@ -443,7 +456,7 @@ function checkSource(source: string) {
                 break;
               case "ch":
                 check1(name, "vn", false);
-                choices++;
+                parsed.choices++;
                 break;
               case "hideifzero":
               case "showifzero":
@@ -469,7 +482,7 @@ function checkSource(source: string) {
                 check1(name, "vn", false);
                 break;
               case "p":
-                chapters++;
+                parsed.chapters++;
                 check1(name, "vn", false);
                 break;
               case "wait":
@@ -485,13 +498,13 @@ function checkSource(source: string) {
                 // Not reserved words
                 if (parentIs("vnd")) {
                   // It's a character definition
-                  if (characters.includes(name)) {
+                  if (parsed.characters.includes(name)) {
                     addError("ERR006", 0, `Reference ${name} already defined.`);
                   }
-                  characters.push(name);
+                  parsed.characters.push(name);
                 } else if (parentIs("vn")) {
                   // It's a paragraph
-                  chapters++;
+                  parsed.chapters++;
                 } else if (
                   parentIs("cr") ||
                   parentIs("cm") ||
@@ -519,24 +532,24 @@ function checkSource(source: string) {
 
           switch (getParent()) {
             case "lb":
-              if (labels.includes(text)) {
+              if (parsed.labels.includes(text)) {
                 addError("ERR007", 0, `${text} is duplicated`);
               }
-              labels.push(text);
+              parsed.labels.push(text);
               break;
             case "gt":
-              jumps.push(text);
+              parsed.jumps.push(text);
               break;
             case "au":
-              author = text;
+              parsed.author = text;
               break;
             case "st":
-              title = text;
+              parsed.title = text;
               break;
             case "bk":
               if (
                 grandIs("vn") &&
-                !characters.includes(text) &&
+                !parsed.characters.includes(text) &&
                 !isImageResource(text)
               ) {
                 addError(
@@ -544,12 +557,23 @@ function checkSource(source: string) {
                   0,
                   `background ${text} is not a resource name or an image url`
                 );
+                return;
               }
+
+              if (!grandIs("vn") && !isImageResource(text)) {
+                addError("ERR005", 0, `background ${text} is not an image url`);
+                return;
+              }
+
+              if (grandIs("menu")) {
+                parsed.menuResource = text;
+              }
+
               break;
             case "cl":
             case "cr":
             case "cm":
-              if (!characters.includes(text) && !isImageResource(text)) {
+              if (!parsed.characters.includes(text) && !isImageResource(text)) {
                 addError(
                   "ERR005",
                   0,
@@ -611,7 +635,7 @@ function checkSource(source: string) {
             case "dec":
             case "clr":
               if (text !== "") {
-                variables.push(text);
+                addVariable(text);
               } else {
                 addError(
                   "ERR005",
@@ -665,33 +689,35 @@ function checkSource(source: string) {
     parser.write(source);
     parser.end();
 
-    jumps.forEach((e) => {
-      if (!labels.includes(e)) {
+    parsed.jumps.forEach((e) => {
+      if (!parsed.labels.includes(e)) {
         addWarning("WAR005", 0, `Jump to ${e} have no corresponding label`);
       }
     });
 
     console.log("References");
-    characters.forEach((e) => console.log(`- ${e}`));
+    parsed.characters.forEach((e) => console.log(`- ${e}`));
     console.log("");
     console.log("Labels");
-    labels.forEach((e) => console.log(`- ${e}`));
+    parsed.labels.forEach((e) => console.log(`- ${e}`));
     console.log("");
     console.log("Variables");
-    variables.forEach((e) => console.log(`- ${e}`));
+    parsed.variables.forEach((e) => console.log(`- ${e}`));
     console.log("");
-    console.log(`Total number of jumps: ${jumps.length}`);
-    console.log(`Total number of choices: ${choices}`);
-    console.log(`Total number of chapters: ${chapters}`);
+    console.log(`Menu background: ${parsed.menuResource}`);
     console.log("");
-    console.log(`Title: ${title}, Author: ${author}`);
+    console.log(`Total number of jumps: ${parsed.jumps.length}`);
+    console.log(`Total number of choices: ${parsed.choices}`);
+    console.log(`Total number of chapters: ${parsed.chapters}`);
+    console.log("");
+    console.log(`Title: ${parsed.title}, Author: ${parsed.author}`);
     console.log("");
   } catch (err) {
     console.log("Error in syntax checking: ", err);
     addError("ERR000", 0, "");
   }
 
-  return { title, author };
+  return parsed;
 }
 
 function replaceAll(text: string, search: string, what: string): string {
@@ -702,4 +728,12 @@ function replaceAll(text: string, search: string, what: string): string {
   }
 
   return result;
+}
+
+function assetsUrl(resource: string) {
+  return resource
+    ? resource.indexOf("/") >= 0
+      ? resource
+      : `res/${resource}`
+    : "";
 }
