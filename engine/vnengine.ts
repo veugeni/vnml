@@ -906,7 +906,6 @@ function addFrontend() {
           <div class="VNTextWindowLabel disable-select LabelStyle"></div>
           <div class="VNTextScroller disable-select TextStyle"></div>
         </div>
-        <div class="VNTextWindowProceed ButtonStyle" onclick="step()"></div>
         <div class="VNMenu">
           <div class="VNMenuItem AudioOff" onclick="toggleAudio()" id="audio">           
           </div>
@@ -920,6 +919,7 @@ function addFrontend() {
         <div class="VNChooseScroller">            
         </div>
       </div>
+      <div class="VNTextWindowProceed ButtonStyle" onclick="step()"></div>
     `;
 
   const p = document.createElement("div");
