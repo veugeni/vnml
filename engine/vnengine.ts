@@ -712,8 +712,7 @@ function getCharacterStyle(styles: string[]) {
   const mods = styles.filter((e) => e.startsWith(" "));
 
   return (
-    (filters.length > 0 ? "filter: " + filters.join(" ") : "") +
-    ";" +
+    (filters.length > 0 ? "filter: " + filters.join(" ") + ";" : "") +
     mods.join(";")
   );
 }
