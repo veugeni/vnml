@@ -292,7 +292,7 @@ function parseSound(e: HTMLElement) {
     elements.sd.currentTime = 0;
     context.hasSound = "";
     if (e.innerText !== "") {
-      elements.sd.src = e.innerText;
+      elements.sd.src = assetsUrl(e.innerText);
       if (context.muted === false) elements.sd.play();
       context.hasSound = e.innerText;
     }
@@ -304,7 +304,7 @@ function setBackgroundMusic(url: string) {
   elements.ms.currentTime = 0;
   context.hasMusic = "";
   if (url !== "") {
-    elements.ms.src = url;
+    elements.ms.src = assetsUrl(url);
     if (context.muted === false) elements.ms.play();
     context.toBeSaved.bgm = url;
     context.hasMusic = url;
@@ -712,7 +712,9 @@ function getCharacterStyle(styles: string[]) {
   const mods = styles.filter((e) => e.startsWith(" "));
 
   return (
-    (filters.length > 0 ? "filter: " + filters.join(" ") : "") + mods.join(";")
+    (filters.length > 0 ? "filter: " + filters.join(" ") : "") +
+    ";" +
+    mods.join(";")
   );
 }
 

@@ -236,7 +236,7 @@ function parseSound(e) {
         elements.sd.currentTime = 0;
         context.hasSound = "";
         if (e.innerText !== "") {
-            elements.sd.src = e.innerText;
+            elements.sd.src = assetsUrl(e.innerText);
             if (context.muted === false)
                 elements.sd.play();
             context.hasSound = e.innerText;
@@ -248,7 +248,7 @@ function setBackgroundMusic(url) {
     elements.ms.currentTime = 0;
     context.hasMusic = "";
     if (url !== "") {
-        elements.ms.src = url;
+        elements.ms.src = assetsUrl(url);
         if (context.muted === false)
             elements.ms.play();
         context.toBeSaved.bgm = url;
@@ -566,7 +566,9 @@ function parseCharacter(e, w) {
 function getCharacterStyle(styles) {
     const filters = styles.filter((e) => !e.startsWith(" "));
     const mods = styles.filter((e) => e.startsWith(" "));
-    return ((filters.length > 0 ? "filter: " + filters.join(" ") : "") + mods.join(";"));
+    return ((filters.length > 0 ? "filter: " + filters.join(" ") : "") +
+        ";" +
+        mods.join(";"));
 }
 function setCharacter(url, w, styles) {
     context.toBeSaved[w] = url;
