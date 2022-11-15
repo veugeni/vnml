@@ -88,7 +88,7 @@ function compile(source, options) {
                 encoding: "utf8"
             });
             checkSource(sourceVnml);
-            (0, errorCodes_1.showCheckResults)();
+            (0, errorCodes_1.showCheckResults)(sourceVnml);
             process.exit((0, errorCodes_1.hasErrors)() ? 1 : 0);
         }
         catch (err) {
@@ -155,7 +155,7 @@ function build(source, options) {
             console.log("Checking source...");
             var parsed = checkSource(sourceVnml);
             console.log("");
-            (0, errorCodes_1.showCheckResults)();
+            (0, errorCodes_1.showCheckResults)(sourceVnml);
             console.log("");
             if ((0, errorCodes_1.hasErrors)()) {
                 process.exit(1);
@@ -272,12 +272,12 @@ function checkSource(source) {
             if (parentIs_1(parent)) {
                 if (unique && alreadyFound_1(name)) {
                     // Multiple not allowed
-                    (0, errorCodes_1.addError)("ERR003", 0, name);
+                    (0, errorCodes_1.addError)("ERR003", parser_1.startIndex, parser_1.endIndex, name);
                 }
             }
             else {
                 // must be used in specific parent
-                (0, errorCodes_1.addError)("ERR004", 0, "".concat(name, " must be child of ").concat(parent));
+                (0, errorCodes_1.addError)("ERR004", parser_1.startIndex, parser_1.endIndex, "".concat(name, " must be child of ").concat(parent));
             }
         };
         var checkValidAttributes_1 = function (name, attributes, valid, allowNumeric) {
@@ -286,7 +286,7 @@ function checkSource(source) {
                 return allowNumeric && !isNaN(parseInt(e[0])) ? false : !valid.includes(e[0]);
             })
                 .forEach(function (e) {
-                return (0, errorCodes_1.addWarning)("WAR006", 0, "Attribute ".concat(e[0], " of ").concat(name, " is unknown."));
+                return (0, errorCodes_1.addWarning)("WAR006", parser_1.startIndex, parser_1.endIndex, "Attribute ".concat(e[0], " of ").concat(name, " is unknown."));
             });
         };
         var isImageResource_1 = function (url) {
@@ -297,20 +297,22 @@ function checkSource(source) {
                 .length > 0;
         };
         var isKnownVariable_1 = function (variable) {
-            return variable !== "" ? parsed.variables.includes(variable) : true;
+            return variable !== ""
+                ? parsed.variables.findIndex(function (v) { return v.text === variable; }) >= 0
+                : true;
         };
-        var addVariable_1 = function (variable) {
+        var addVariable_1 = function (variable, startIndex, endIndex) {
             return variable !== "" &&
-                !parsed.variables.includes(variable) &&
-                parsed.variables.push(variable);
+                parsed.variables.findIndex(function (v) { return v.text === variable; }) < 0 &&
+                parsed.variables.push({ text: variable, startIndex: startIndex, endIndex: endIndex });
         };
-        var parser = new htmlparser2_1.Parser({
+        var parser_1 = new htmlparser2_1.Parser({
             onopentag: function (name, attributes) {
                 if (vnmlFound) {
                     hasTextValue = false;
                     switch (name) {
                         case "vnml":
-                            (0, errorCodes_1.addError)("ERR003", 0, "Main node (VNML)");
+                            (0, errorCodes_1.addError)("ERR003", parser_1.startIndex, parser_1.endIndex, "Main node (VNML)");
                             break;
                         case "vn":
                         case "vnd":
@@ -319,12 +321,12 @@ function checkSource(source) {
                         case "bk":
                             if (grandIs_1("vnd")) {
                                 if (alreadyFound_1("bk")) {
-                                    (0, errorCodes_1.addError)("ERR003", 0, "Image node must be unique in reference");
+                                    (0, errorCodes_1.addError)("ERR003", parser_1.startIndex, parser_1.endIndex, "Image node must be unique in reference");
                                 }
                             }
                             else {
                                 if (!parentIs_1("vn")) {
-                                    (0, errorCodes_1.addError)("ERR005", 0, "Background node must be used in reference or chapters only");
+                                    (0, errorCodes_1.addError)("ERR005", parser_1.startIndex, parser_1.endIndex, "Background node must be used in reference or chapters only");
                                 }
                             }
                             checkValidAttributes_1(name, attributes, ["flip", "blur", "gray", "flash", "thunder"], false);
@@ -332,11 +334,11 @@ function checkSource(source) {
                         case "nm":
                             if (grandIs_1("vnd")) {
                                 if (alreadyFound_1("nm")) {
-                                    (0, errorCodes_1.addError)("ERR003", 0, "Name node must be unique in reference");
+                                    (0, errorCodes_1.addError)("ERR003", parser_1.startIndex, parser_1.endIndex, "Name node must be unique in reference");
                                 }
                             }
                             else {
-                                (0, errorCodes_1.addError)("ERR005", 0, "Name node must be used in reference only");
+                                (0, errorCodes_1.addError)("ERR005", parser_1.startIndex, parser_1.endIndex, "Name node must be used in reference only");
                             }
                             break;
                         case "st":
@@ -385,10 +387,14 @@ function checkSource(source) {
                             // Not reserved words
                             if (parentIs_1("vnd")) {
                                 // It's a character definition
-                                if (parsed.characters.includes(name)) {
-                                    (0, errorCodes_1.addError)("ERR006", 0, "Reference ".concat(name, " already defined."));
+                                if (parsed.characters.findIndex(function (c) { return c.text === name; }) >= 0) {
+                                    (0, errorCodes_1.addError)("ERR006", parser_1.startIndex, parser_1.endIndex, "Reference ".concat(name, " already defined."));
                                 }
-                                parsed.characters.push(name);
+                                parsed.characters.push({
+                                    text: name,
+                                    startIndex: parser_1.startIndex,
+                                    endIndex: parser_1.endIndex
+                                });
                             }
                             else if (parentIs_1("vn")) {
                                 // It's a paragraph
@@ -400,12 +406,12 @@ function checkSource(source) {
                                 parentIs_1("bk")) {
                                 // It's an image reference
                                 if (hasChildren_1()) {
-                                    (0, errorCodes_1.addWarning)("WAR003", 0, "Only one reference allowed.");
+                                    (0, errorCodes_1.addWarning)("WAR003", parser_1.startIndex, parser_1.endIndex, "Only one reference allowed.");
                                 }
                             }
                             else {
                                 // It will be ignored.
-                                (0, errorCodes_1.addWarning)("WAR002", 0, "maybe ".concat(name, " is misplaced?"));
+                                (0, errorCodes_1.addWarning)("WAR002", parser_1.startIndex, parser_1.endIndex, "maybe ".concat(name, " is misplaced?"));
                             }
                             break;
                     }
@@ -418,13 +424,21 @@ function checkSource(source) {
                 hasTextValue = true;
                 switch (getParent_1()) {
                     case "lb":
-                        if (parsed.labels.includes(text)) {
-                            (0, errorCodes_1.addError)("ERR007", 0, "".concat(text, " is duplicated"));
+                        if (parsed.labels.findIndex(function (l) { return l.text === text; }) >= 0) {
+                            (0, errorCodes_1.addError)("ERR007", parser_1.startIndex, parser_1.endIndex, "\"".concat(text, "\" is duplicated"));
                         }
-                        parsed.labels.push(text);
+                        parsed.labels.push({
+                            text: text,
+                            startIndex: parser_1.startIndex,
+                            endIndex: parser_1.endIndex
+                        });
                         break;
                     case "gt":
-                        parsed.jumps.push(text);
+                        parsed.jumps.push({
+                            text: text,
+                            startIndex: parser_1.startIndex,
+                            endIndex: parser_1.endIndex
+                        });
                         break;
                     case "au":
                         parsed.author = text;
@@ -434,13 +448,13 @@ function checkSource(source) {
                         break;
                     case "bk":
                         if (grandIs_1("vn") &&
-                            !parsed.characters.includes(text) &&
+                            parsed.characters.findIndex(function (c) { return c.text === text; }) < 0 &&
                             !isImageResource_1(text)) {
-                            (0, errorCodes_1.addError)("ERR005", 0, "background ".concat(text, " is not a resource name or an image url"));
+                            (0, errorCodes_1.addError)("ERR005", parser_1.startIndex, parser_1.endIndex, "background \"".concat(text, "\" is not a resource name or an image url"));
                             return;
                         }
                         if (!grandIs_1("vn") && !isImageResource_1(text)) {
-                            (0, errorCodes_1.addError)("ERR005", 0, "background ".concat(text, " is not an image url"));
+                            (0, errorCodes_1.addError)("ERR005", parser_1.startIndex, parser_1.endIndex, "background \"".concat(text, "\" is not an image url"));
                             return;
                         }
                         if (grandIs_1("menu")) {
@@ -450,29 +464,30 @@ function checkSource(source) {
                     case "cl":
                     case "cr":
                     case "cm":
-                        if (!parsed.characters.includes(text) && !isImageResource_1(text)) {
-                            (0, errorCodes_1.addError)("ERR005", 0, "Character ".concat(text, " is not a character name or an image resource"));
+                        if (parsed.characters.findIndex(function (c) { return c.text === text; }) < 0 &&
+                            !isImageResource_1(text)) {
+                            (0, errorCodes_1.addError)("ERR005", parser_1.startIndex, parser_1.endIndex, "Character \"".concat(text, "\" is not a character name or an image resource"));
                         }
                         break;
                     case "bgm":
                         if (!isSoundResource_1(text)) {
-                            (0, errorCodes_1.addError)("ERR005", 0, "Background music ".concat(text, " is not a sound resource"));
+                            (0, errorCodes_1.addError)("ERR005", parser_1.startIndex, parser_1.endIndex, "Background music \"".concat(text, "\" is not a sound resource"));
                         }
                         break;
                     case "sfx":
                         if (!isSoundResource_1(text)) {
-                            (0, errorCodes_1.addError)("ERR005", 0, "Sound effect ".concat(text, " is not a sound resource"));
+                            (0, errorCodes_1.addError)("ERR005", parser_1.startIndex, parser_1.endIndex, "Sound effect \"".concat(text, "\" is not a sound resource"));
                         }
                         break;
                     case "wait":
                         var secs = parseInt(text);
                         if (text !== "key" && (isNaN(secs) || secs <= 0 || secs > 60)) {
-                            (0, errorCodes_1.addError)("ERR005", 0, "Wait tag must specify a time in seconds between 1 and 60 or 'key'");
+                            (0, errorCodes_1.addError)("ERR005", parser_1.startIndex, parser_1.endIndex, "Wait tag must specify a time in seconds between 1 and 60 or 'key'");
                         }
                         break;
                     case "end":
                         if (!isKnownVariable_1(text)) {
-                            (0, errorCodes_1.addWarning)("WAR008", 0, "Variable ".concat(text, " specified in end tag is unknown or not yet defined"));
+                            (0, errorCodes_1.addWarning)("WAR008", parser_1.startIndex, parser_1.endIndex, "Variable \"".concat(text, "\" specified in end tag is unknown or not yet defined"));
                         }
                         break;
                     case "hideifzero":
@@ -480,17 +495,17 @@ function checkSource(source) {
                     case "showifnonzero":
                     case "hideifnonzero":
                         if (!isKnownVariable_1(text)) {
-                            (0, errorCodes_1.addWarning)("WAR008", 0, "Variable ".concat(text, " specified in ").concat(getParent_1(), " tag is unknown or not yet defined"));
+                            (0, errorCodes_1.addWarning)("WAR008", parser_1.startIndex, parser_1.endIndex, "Variable \"".concat(text, "\" specified in \"").concat(getParent_1(), "\" tag is unknown or not yet defined"));
                         }
                         break;
                     case "inc":
                     case "dec":
                     case "clr":
                         if (text !== "") {
-                            addVariable_1(text);
+                            addVariable_1(text, parser_1.startIndex, parser_1.endIndex);
                         }
                         else {
-                            (0, errorCodes_1.addError)("ERR005", 0, "".concat(getParent_1(), " tag must specify a variable name"));
+                            (0, errorCodes_1.addError)("ERR005", parser_1.startIndex, parser_1.endIndex, "".concat(getParent_1(), " tag must specify a variable name"));
                         }
                         break;
                 }
@@ -499,7 +514,7 @@ function checkSource(source) {
                 switch (tagname) {
                     case "wait":
                         if (!hasTextValue) {
-                            (0, errorCodes_1.addError)("ERR005", 0, "Wait tag must specify a time in seconds between 1 and 60 or 'key'");
+                            (0, errorCodes_1.addError)("ERR005", parser_1.startIndex, parser_1.endIndex, "Wait tag must specify a time in seconds between 1 and 60 or 'key'");
                         }
                     case "hideifzero":
                     case "showifzero":
@@ -509,21 +524,21 @@ function checkSource(source) {
                     case "dec":
                     case "clr":
                         if (!hasTextValue) {
-                            (0, errorCodes_1.addError)("ERR005", 0, "".concat(tagname, " must specify a variable name"));
+                            (0, errorCodes_1.addError)("ERR005", parser_1.startIndex, parser_1.endIndex, "".concat(tagname, " must specify a variable name"));
                         }
                         break;
                 }
                 var node = popNode_1();
                 if ((node === null || node === void 0 ? void 0 : node.name) !== tagname) {
-                    (0, errorCodes_1.addError)("ERR005", 0, "misplaced closing tag ".concat(tagname, " needed ").concat(node === null || node === void 0 ? void 0 : node.name));
+                    (0, errorCodes_1.addError)("ERR005", parser_1.startIndex, parser_1.endIndex, "misplaced closing tag ".concat(tagname, " needed ").concat(node === null || node === void 0 ? void 0 : node.name));
                 }
             }
         }, { lowerCaseTags: true, recognizeSelfClosing: true });
-        parser.write(source);
-        parser.end();
+        parser_1.write(source);
+        parser_1.end();
         parsed.jumps.forEach(function (e) {
-            if (!parsed.labels.includes(e)) {
-                (0, errorCodes_1.addWarning)("WAR005", 0, "Jump to ".concat(e, " have no corresponding label"));
+            if (parsed.labels.findIndex(function (l) { return l.text === e.text; }) < 0) {
+                (0, errorCodes_1.addWarning)("WAR005", e.startIndex, e.endIndex, "Jump to \"".concat(e.text, "\" have no corresponding label"));
             }
         });
         console.log("References");
@@ -546,7 +561,7 @@ function checkSource(source) {
     }
     catch (err) {
         console.log("Error in syntax checking: ", err);
-        (0, errorCodes_1.addError)("ERR000", 0, "");
+        (0, errorCodes_1.addError)("ERR000", 0, 0, "");
     }
     return parsed;
 }

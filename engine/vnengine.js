@@ -566,8 +566,7 @@ function parseCharacter(e, w) {
 function getCharacterStyle(styles) {
     const filters = styles.filter((e) => !e.startsWith(" "));
     const mods = styles.filter((e) => e.startsWith(" "));
-    return ((filters.length > 0 ? "filter: " + filters.join(" ") : "") +
-        ";" +
+    return ((filters.length > 0 ? "filter: " + filters.join(" ") + ";" : "") +
         mods.join(";"));
 }
 function setCharacter(url, w, styles) {

@@ -23,7 +23,12 @@ export const WarningsCodes = {
 export type VNMLError = keyof typeof ErrorCodes;
 export type VNMLWarning = keyof typeof WarningsCodes;
 
-export type VNMLCheck<T> = { line: number; extra: string; code: T };
+export type VNMLCheck<T> = {
+  startIndex: number;
+  endIndex: number;
+  extra: string;
+  code: T;
+};
 
 export type SourceCheckResult = {
   errors: VNMLCheck<VNMLError>[];
@@ -40,27 +45,46 @@ export const clearCheckResults = () => {
   checkResult.warnings = [];
 };
 
-export const addError = (code: VNMLError, line: number, extra: string) => {
-  checkResult.errors.push({ code, line, extra });
+export const addError = (
+  code: VNMLError,
+  startIndex: number,
+  endIndex: number,
+  extra: string
+) => {
+  checkResult.errors.push({ code, startIndex, endIndex, extra });
 };
 
-export const addWarning = (code: VNMLWarning, line: number, extra: string) => {
-  checkResult.warnings.push({ code, line, extra });
+export const addWarning = (
+  code: VNMLWarning,
+  startIndex: number,
+  endIndex: number,
+  extra: string
+) => {
+  checkResult.warnings.push({ code, startIndex, endIndex, extra });
 };
 
 export const checkResults = () => checkResult;
 
-export const showCheckResults = () => {
-  checkResult.errors.forEach((e) =>
-    console.log(`${e.code} ${ErrorCodes[e.code]} at line ${e.line}. ${e.extra}`)
-  );
-  checkResult.warnings.forEach((w) =>
+export const showCheckResults = (body: string) => {
+  checkResult.errors.forEach((e) => {
+    const line = getLine(body, e.startIndex);
+    console.log(`${e.code} ${ErrorCodes[e.code]} at line ${line}. ${e.extra}`);
+  });
+  checkResult.warnings.forEach((w) => {
+    const line = getLine(body, w.startIndex);
     console.log(
-      `Warning: ${w.code} ${WarningsCodes[w.code]} at line ${w.line}. ${
-        w.extra
-      }`
-    )
-  );
+      `Warning: ${w.code} ${WarningsCodes[w.code]} at line ${line}. ${w.extra}`
+    );
+  });
 };
+
+export function getLine(body: string, index: number) {
+  if (!body) return false;
+  var subBody = body.substring(0, index);
+  if (subBody === "") return false;
+  var match = subBody.match(/\n/gi);
+  if (match) return match.length + 1;
+  return 1;
+}
 
 export const hasErrors = () => checkResult.errors.length > 0;

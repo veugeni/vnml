@@ -118,7 +118,7 @@ function compile(source: string, options: any) {
       });
 
       checkSource(sourceVnml);
-      showCheckResults();
+      showCheckResults(sourceVnml);
       process.exit(hasErrors() ? 1 : 0);
     } catch (err) {
       console.log("Error: ", err);
@@ -200,7 +200,7 @@ function build(source: string, options: any) {
       const parsed = checkSource(sourceVnml);
 
       console.log("");
-      showCheckResults();
+      showCheckResults(sourceVnml);
       console.log("");
 
       if (hasErrors()) {
@@ -299,6 +299,12 @@ type NodeStackElement = {
   found: string[];
 };
 
+type PositionalString = {
+  text: string;
+  startIndex: number;
+  endIndex: number;
+};
+
 function checkSource(source: string) {
   clearCheckResults();
   const nodeStack: NodeStackElement[] = [];
@@ -309,10 +315,10 @@ function checkSource(source: string) {
     menuResource: "",
     title: "Unknown title",
     author: "Unknown author",
-    characters: [] as string[],
-    labels: [] as string[],
-    jumps: [] as string[],
-    variables: [] as string[],
+    characters: [] as PositionalString[],
+    labels: [] as PositionalString[],
+    jumps: [] as PositionalString[],
+    variables: [] as PositionalString[],
     chapters: 0,
     choices: 0,
   };
@@ -351,11 +357,16 @@ function checkSource(source: string) {
       if (parentIs(parent)) {
         if (unique && alreadyFound(name)) {
           // Multiple not allowed
-          addError("ERR003", 0, name);
+          addError("ERR003", parser.startIndex, parser.endIndex, name);
         }
       } else {
         // must be used in specific parent
-        addError("ERR004", 0, `${name} must be child of ${parent}`);
+        addError(
+          "ERR004",
+          parser.startIndex,
+          parser.endIndex,
+          `${name} must be child of ${parent}`
+        );
       }
     };
 
@@ -370,7 +381,12 @@ function checkSource(source: string) {
           allowNumeric && !isNaN(parseInt(e[0])) ? false : !valid.includes(e[0])
         )
         .forEach((e) =>
-          addWarning("WAR006", 0, `Attribute ${e[0]} of ${name} is unknown.`)
+          addWarning(
+            "WAR006",
+            parser.startIndex,
+            parser.endIndex,
+            `Attribute ${e[0]} of ${name} is unknown.`
+          )
         );
     };
 
@@ -384,12 +400,18 @@ function checkSource(source: string) {
         .length > 0;
 
     const isKnownVariable = (variable: string) =>
-      variable !== "" ? parsed.variables.includes(variable) : true;
+      variable !== ""
+        ? parsed.variables.findIndex((v) => v.text === variable) >= 0
+        : true;
 
-    const addVariable = (variable: string) =>
+    const addVariable = (
+      variable: string,
+      startIndex: number,
+      endIndex: number
+    ) =>
       variable !== "" &&
-      !parsed.variables.includes(variable) &&
-      parsed.variables.push(variable);
+      parsed.variables.findIndex((v) => v.text === variable) < 0 &&
+      parsed.variables.push({ text: variable, startIndex, endIndex });
 
     const parser = new Parser(
       {
@@ -399,7 +421,12 @@ function checkSource(source: string) {
 
             switch (name) {
               case "vnml":
-                addError("ERR003", 0, "Main node (VNML)");
+                addError(
+                  "ERR003",
+                  parser.startIndex,
+                  parser.endIndex,
+                  "Main node (VNML)"
+                );
                 break;
               case "vn":
               case "vnd":
@@ -410,7 +437,8 @@ function checkSource(source: string) {
                   if (alreadyFound("bk")) {
                     addError(
                       "ERR003",
-                      0,
+                      parser.startIndex,
+                      parser.endIndex,
                       "Image node must be unique in reference"
                     );
                   }
@@ -418,7 +446,8 @@ function checkSource(source: string) {
                   if (!parentIs("vn")) {
                     addError(
                       "ERR005",
-                      0,
+                      parser.startIndex,
+                      parser.endIndex,
                       "Background node must be used in reference or chapters only"
                     );
                   }
@@ -435,14 +464,16 @@ function checkSource(source: string) {
                   if (alreadyFound("nm")) {
                     addError(
                       "ERR003",
-                      0,
+                      parser.startIndex,
+                      parser.endIndex,
                       "Name node must be unique in reference"
                     );
                   }
                 } else {
                   addError(
                     "ERR005",
-                    0,
+                    parser.startIndex,
+                    parser.endIndex,
                     "Name node must be used in reference only"
                   );
                 }
@@ -498,10 +529,21 @@ function checkSource(source: string) {
                 // Not reserved words
                 if (parentIs("vnd")) {
                   // It's a character definition
-                  if (parsed.characters.includes(name)) {
-                    addError("ERR006", 0, `Reference ${name} already defined.`);
+                  if (
+                    parsed.characters.findIndex((c) => c.text === name) >= 0
+                  ) {
+                    addError(
+                      "ERR006",
+                      parser.startIndex,
+                      parser.endIndex,
+                      `Reference ${name} already defined.`
+                    );
                   }
-                  parsed.characters.push(name);
+                  parsed.characters.push({
+                    text: name,
+                    startIndex: parser.startIndex,
+                    endIndex: parser.endIndex,
+                  });
                 } else if (parentIs("vn")) {
                   // It's a paragraph
                   parsed.chapters++;
@@ -513,11 +555,21 @@ function checkSource(source: string) {
                 ) {
                   // It's an image reference
                   if (hasChildren()) {
-                    addWarning("WAR003", 0, `Only one reference allowed.`);
+                    addWarning(
+                      "WAR003",
+                      parser.startIndex,
+                      parser.endIndex,
+                      `Only one reference allowed.`
+                    );
                   }
                 } else {
                   // It will be ignored.
-                  addWarning("WAR002", 0, `maybe ${name} is misplaced?`);
+                  addWarning(
+                    "WAR002",
+                    parser.startIndex,
+                    parser.endIndex,
+                    `maybe ${name} is misplaced?`
+                  );
                 }
                 break;
             }
@@ -532,13 +584,26 @@ function checkSource(source: string) {
 
           switch (getParent()) {
             case "lb":
-              if (parsed.labels.includes(text)) {
-                addError("ERR007", 0, `${text} is duplicated`);
+              if (parsed.labels.findIndex((l) => l.text === text) >= 0) {
+                addError(
+                  "ERR007",
+                  parser.startIndex,
+                  parser.endIndex,
+                  `"${text}" is duplicated`
+                );
               }
-              parsed.labels.push(text);
+              parsed.labels.push({
+                text,
+                startIndex: parser.startIndex,
+                endIndex: parser.endIndex,
+              });
               break;
             case "gt":
-              parsed.jumps.push(text);
+              parsed.jumps.push({
+                text,
+                startIndex: parser.startIndex,
+                endIndex: parser.endIndex,
+              });
               break;
             case "au":
               parsed.author = text;
@@ -549,19 +614,25 @@ function checkSource(source: string) {
             case "bk":
               if (
                 grandIs("vn") &&
-                !parsed.characters.includes(text) &&
+                parsed.characters.findIndex((c) => c.text === text) < 0 &&
                 !isImageResource(text)
               ) {
                 addError(
                   "ERR005",
-                  0,
-                  `background ${text} is not a resource name or an image url`
+                  parser.startIndex,
+                  parser.endIndex,
+                  `background "${text}" is not a resource name or an image url`
                 );
                 return;
               }
 
               if (!grandIs("vn") && !isImageResource(text)) {
-                addError("ERR005", 0, `background ${text} is not an image url`);
+                addError(
+                  "ERR005",
+                  parser.startIndex,
+                  parser.endIndex,
+                  `background "${text}" is not an image url`
+                );
                 return;
               }
 
@@ -573,11 +644,15 @@ function checkSource(source: string) {
             case "cl":
             case "cr":
             case "cm":
-              if (!parsed.characters.includes(text) && !isImageResource(text)) {
+              if (
+                parsed.characters.findIndex((c) => c.text === text) < 0 &&
+                !isImageResource(text)
+              ) {
                 addError(
                   "ERR005",
-                  0,
-                  `Character ${text} is not a character name or an image resource`
+                  parser.startIndex,
+                  parser.endIndex,
+                  `Character "${text}" is not a character name or an image resource`
                 );
               }
               break;
@@ -585,8 +660,9 @@ function checkSource(source: string) {
               if (!isSoundResource(text)) {
                 addError(
                   "ERR005",
-                  0,
-                  `Background music ${text} is not a sound resource`
+                  parser.startIndex,
+                  parser.endIndex,
+                  `Background music "${text}" is not a sound resource`
                 );
               }
               break;
@@ -594,8 +670,9 @@ function checkSource(source: string) {
               if (!isSoundResource(text)) {
                 addError(
                   "ERR005",
-                  0,
-                  `Sound effect ${text} is not a sound resource`
+                  parser.startIndex,
+                  parser.endIndex,
+                  `Sound effect "${text}" is not a sound resource`
                 );
               }
               break;
@@ -605,7 +682,8 @@ function checkSource(source: string) {
               if (text !== "key" && (isNaN(secs) || secs <= 0 || secs > 60)) {
                 addError(
                   "ERR005",
-                  0,
+                  parser.startIndex,
+                  parser.endIndex,
                   `Wait tag must specify a time in seconds between 1 and 60 or 'key'`
                 );
               }
@@ -614,8 +692,9 @@ function checkSource(source: string) {
               if (!isKnownVariable(text)) {
                 addWarning(
                   "WAR008",
-                  0,
-                  `Variable ${text} specified in end tag is unknown or not yet defined`
+                  parser.startIndex,
+                  parser.endIndex,
+                  `Variable "${text}" specified in end tag is unknown or not yet defined`
                 );
               }
               break;
@@ -626,8 +705,9 @@ function checkSource(source: string) {
               if (!isKnownVariable(text)) {
                 addWarning(
                   "WAR008",
-                  0,
-                  `Variable ${text} specified in ${getParent()} tag is unknown or not yet defined`
+                  parser.startIndex,
+                  parser.endIndex,
+                  `Variable "${text}" specified in "${getParent()}" tag is unknown or not yet defined`
                 );
               }
               break;
@@ -635,11 +715,12 @@ function checkSource(source: string) {
             case "dec":
             case "clr":
               if (text !== "") {
-                addVariable(text);
+                addVariable(text, parser.startIndex, parser.endIndex);
               } else {
                 addError(
                   "ERR005",
-                  0,
+                  parser.startIndex,
+                  parser.endIndex,
                   `${getParent()} tag must specify a variable name`
                 );
               }
@@ -652,7 +733,8 @@ function checkSource(source: string) {
               if (!hasTextValue) {
                 addError(
                   "ERR005",
-                  0,
+                  parser.startIndex,
+                  parser.endIndex,
                   `Wait tag must specify a time in seconds between 1 and 60 or 'key'`
                 );
               }
@@ -666,7 +748,8 @@ function checkSource(source: string) {
               if (!hasTextValue) {
                 addError(
                   "ERR005",
-                  0,
+                  parser.startIndex,
+                  parser.endIndex,
                   `${tagname} must specify a variable name`
                 );
               }
@@ -677,7 +760,8 @@ function checkSource(source: string) {
           if (node?.name !== tagname) {
             addError(
               "ERR005",
-              0,
+              parser.startIndex,
+              parser.endIndex,
               `misplaced closing tag ${tagname} needed ${node?.name}`
             );
           }
@@ -690,8 +774,13 @@ function checkSource(source: string) {
     parser.end();
 
     parsed.jumps.forEach((e) => {
-      if (!parsed.labels.includes(e)) {
-        addWarning("WAR005", 0, `Jump to ${e} have no corresponding label`);
+      if (parsed.labels.findIndex((l) => l.text === e.text) < 0) {
+        addWarning(
+          "WAR005",
+          e.startIndex,
+          e.endIndex,
+          `Jump to "${e.text}" have no corresponding label`
+        );
       }
     });
 
@@ -714,7 +803,7 @@ function checkSource(source: string) {
     console.log("");
   } catch (err) {
     console.log("Error in syntax checking: ", err);
-    addError("ERR000", 0, "");
+    addError("ERR000", 0, 0, "");
   }
 
   return parsed;
