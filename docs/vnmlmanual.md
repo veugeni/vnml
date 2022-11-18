@@ -39,7 +39,18 @@ single characters, and so on. (Please read the foreword.)
 
 Any kind of image can be used as a backgroud. The engine will adapt it to show the central part over the 70% of screen height to be nicely shown on mobile devices too. A resolution of 1280x720 is usually good.
 
-The tag responsible for changing the background is `<bk></bk>` and can have different attributes for special effects: `"flip", "blur", "gray", "flash", "thunder"`
+The tag responsible for changing the background is `<bk></bk>` and can have different attributes for special effects: `"flip", "blur", "gray", "flash", "thunder", "immediate"`
+
+```
+ // Shows the background named house_in_the_forest
+ <bk>house_in_the_forest</bk>
+
+ // Shows the image named thepub.jpg
+ <bk>thepub.jpg</bk>
+
+ // Shows house_in_the_forest with a blurring effect
+ <bk blur>house_in_the_forest</bk>
+```
 
 ## Characters
 
@@ -134,8 +145,8 @@ To hide or show choices you can use the following tags `<hideifzero>, <showifzer
 
 # References and URLs
 
-Even if is not mandatory it's very useful to have named characters (or images) because if you plan to change a visual you can do it without changing it in all the story. All the named characters, images, and story info are stored in a special tag named `<vnd></vnd>`. When using a named character in chapters the `<nm></nm>` tag will say to the engine which name to show, and `<bk></bk>` will tell where the visual is stored.
-There are also other special tags available: `<st></st>` provides the story title, `<au></au>` for author's name, `<menu></menu>` for the initial menu visual.
+Even if is not mandatory it's very useful to have named characters (or backgrounds) because if you plan to change a visual you can do it without changing it in all occurences. Named characters, images, and story info are stored in a special tag named `<vnd></vnd>`. When using a named character in chapters the `<nm></nm>` tag will say to the engine which name to show, and `<bk></bk>` will tell where the visual is stored.
+There are also other special tags available: `<st></st>` provides the story title, `<au></au>` for author's name, `<menu></menu>` for the initial menu visual and `<ln></ln>` for the story language. The language codes used are standard html ISO codes in the form `en-US` where the first code is the language code and the second is the country code. (`https://www.w3schools.com/tags/ref_language_codes.asp`, `https://www.w3schools.com/tags/ref_country_codes.asp`)
 
 ```
  // An Example
@@ -144,6 +155,7 @@ There are also other special tags available: `<st></st>` provides the story titl
         <st>Mister Tiger's amazing adventure</st>
         <au>John Smith</au>
         <menu>assets/menu/background.jpg</menu>
+        <ln>en-EN</ln>
 
         <!-- This is a named character -->
         <tiger>

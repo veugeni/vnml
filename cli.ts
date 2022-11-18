@@ -228,10 +228,12 @@ function build(source: string, options: any) {
       let menuResult = replaceAll(menu, "$TITLE$", config.title);
       menuResult = replaceAll(menuResult, "$PAGETITLE$", config.pageTitle);
       menuResult = replaceAll(menuResult, "$AUTHOR$", config.author);
+      menuResult = replaceAll(menuResult, "$PAGELANG$", parsed.language);
 
       let result = replaceAll(frame, "$TITLE$", config.title);
       result = replaceAll(result, "$PAGETITLE$", config.pageTitle);
       result = replaceAll(result, "$AUTHOR$", config.author);
+      result = replaceAll(result, "$PAGELANG$", parsed.language);
 
       const rname =
         Math.random().toString(36).substring(2, 15) +
@@ -315,6 +317,7 @@ function checkSource(source: string) {
     menuResource: "",
     title: "Unknown title",
     author: "Unknown author",
+    language: "",
     characters: [] as PositionalString[],
     labels: [] as PositionalString[],
     jumps: [] as PositionalString[],
@@ -455,7 +458,7 @@ function checkSource(source: string) {
                 checkValidAttributes(
                   name,
                   attributes,
-                  ["flip", "blur", "gray", "flash", "thunder"],
+                  ["flip", "blur", "gray", "flash", "thunder", "immediate"],
                   false
                 );
                 break;
@@ -480,6 +483,7 @@ function checkSource(source: string) {
                 break;
               case "st":
               case "au":
+              case "ln":
                 check1(name, "vnd", true);
                 break;
               case "gt":
@@ -610,6 +614,18 @@ function checkSource(source: string) {
               break;
             case "st":
               parsed.title = text;
+              break;
+            case "ln":
+              parsed.language = text;
+
+              if (text === "" || text.length < 2) {
+                addError(
+                  "ERR005",
+                  parser.startIndex,
+                  parser.endIndex,
+                  `invalid language code "${text}"`
+                );
+              }
               break;
             case "bk":
               if (
@@ -785,13 +801,13 @@ function checkSource(source: string) {
     });
 
     console.log("References");
-    parsed.characters.forEach((e) => console.log(`- ${e}`));
+    parsed.characters.forEach((e) => console.log(`- ${e.text}`));
     console.log("");
     console.log("Labels");
-    parsed.labels.forEach((e) => console.log(`- ${e}`));
+    parsed.labels.forEach((e) => console.log(`- ${e.text}`));
     console.log("");
     console.log("Variables");
-    parsed.variables.forEach((e) => console.log(`- ${e}`));
+    parsed.variables.forEach((e) => console.log(`- ${e.text}`));
     console.log("");
     console.log(`Menu background: ${parsed.menuResource}`);
     console.log("");
@@ -801,6 +817,16 @@ function checkSource(source: string) {
     console.log("");
     console.log(`Title: ${parsed.title}, Author: ${parsed.author}`);
     console.log("");
+
+    if (!parsed.language || parsed.language == "") {
+      parsed.language = "en";
+      console.log(
+        "Warning: No language tag defined, switching to english by default."
+      );
+      console.log("");
+    } else {
+      console.log(`Story language: ${parsed.language}`);
+    }
   } catch (err) {
     console.log("Error in syntax checking: ", err);
     addError("ERR000", 0, 0, "");

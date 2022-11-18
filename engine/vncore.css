@@ -1,6 +1,5 @@
 * {
   box-sizing: border-box;
-  transition-duration: 1s;
 }
 html,
 body,
@@ -166,6 +165,7 @@ body {
   background-size: cover;
   z-index: 100;
   display: block !important;
+  transition-duration: 0.5s;
 }
 
 .VNBackgroundOverlay {
@@ -299,6 +299,7 @@ body {
   background-size: contain;
   z-index: 200;
   display: block;
+  transition-duration: 1s;
 }
 
 .VNCAnchorRight {
@@ -396,7 +397,7 @@ body {
   }
 
   .VNTextWindow {
-    font-size: 48px;
+    font-size: 38px;
     justify-content: center;
   }
 
@@ -409,14 +410,14 @@ body {
   }
 
   .VNTextWindowLabel {
-    font-size: 48px;
+    font-size: 38px;
     font-weight: bold;
     top: -4.5rem;
   }
 
   .VNTextScroller {
     max-width: 1600px;
-    font-size: 48px;
+    font-size: 38px;
   }
 
   .VNBackgroundFull {
@@ -466,11 +467,11 @@ body {
   }
 
   .VNTextWindow {
-    font-size: 24px;
+    font-size: 36px;
   }
 
   .VNChooseWindow {
-    font-size: 24px;
+    font-size: 34px;
   }
 
   .VNChooseItem {
@@ -478,7 +479,7 @@ body {
   }
 
   .VNTextWindowLabel {
-    font-size: 24px;
+    font-size: 36px;
     font-weight: bold;
     top: -3rem;
   }

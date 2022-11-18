@@ -17,6 +17,7 @@ const StyledAttributes = {
     const angle = Math.random() * 6 - 3;
     return ` -webkit-transform: rotateZ(${angle}deg);transform: rotateZ(${angle}deg);`;
   },
+  immediate: () => " transition-duration: 0s !important",
 };
 
 const EffectAttributes = {
@@ -84,6 +85,7 @@ const context = {
   subPage: 0,
   title: "untitled",
   author: "who knows?!",
+  language: "en",
   saveToken: "",
   state: "SEEK_PARAGRAPH",
   cursor: 0,
@@ -162,8 +164,11 @@ function startup() {
 
     const title = elements.vnd?.querySelector<HTMLElement>("st");
     const author = elements.vnd?.querySelector<HTMLElement>("au");
+    const language = elements.vnd?.querySelector<HTMLElement>("ln");
+
     context.title = title ? title.innerText : "untitled";
     context.author = author ? author.innerText : "who knows?!";
+    context.language = language ? language.innerText : "en";
     context.saveToken = buildToken(context.title);
 
     console.log("Playing " + context.title + " by " + context.author);
@@ -533,7 +538,7 @@ function assetsUrl(resource: string) {
 }
 
 function parseBackground(e: HTMLElement) {
-  const style = parseStyleAttributes(e).join(" ");
+  const style = getCharacterStyle(parseStyleAttributes(e));
   setBackgroundEffect("");
 
   const backTag = seekTag(e.innerText);
@@ -557,10 +562,9 @@ function setBackground(url: string, style?: string) {
 
   elements.bg.setAttribute(
     "style",
-    (url === ""
+    url === ""
       ? "background-image:none;"
-      : `background-image:url(${assetsUrl(url)});`) +
-      (style !== "" ? `filter: ${style};` : "")
+      : `background-image:url(${assetsUrl(url)});${style};`
   );
 }
 

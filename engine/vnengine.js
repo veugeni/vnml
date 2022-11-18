@@ -16,6 +16,7 @@ const StyledAttributes = {
         const angle = Math.random() * 6 - 3;
         return ` -webkit-transform: rotateZ(${angle}deg);transform: rotateZ(${angle}deg);`;
     },
+    immediate: () => " transition-duration: 0s !important",
 };
 const EffectAttributes = {
     flash: "animation: flash1 1s",
@@ -49,6 +50,7 @@ const context = {
     subPage: 0,
     title: "untitled",
     author: "who knows?!",
+    language: "en",
     saveToken: "",
     state: "SEEK_PARAGRAPH",
     cursor: 0,
@@ -84,7 +86,7 @@ function vnml() {
     startup();
 }
 function startup() {
-    var _a, _b;
+    var _a, _b, _c;
     const vnml = document.querySelector("vnml");
     const vn = document.querySelector("vn");
     console.log("Building empty save bundle");
@@ -120,8 +122,10 @@ function startup() {
         context.index = 0;
         const title = (_a = elements.vnd) === null || _a === void 0 ? void 0 : _a.querySelector("st");
         const author = (_b = elements.vnd) === null || _b === void 0 ? void 0 : _b.querySelector("au");
+        const language = (_c = elements.vnd) === null || _c === void 0 ? void 0 : _c.querySelector("ln");
         context.title = title ? title.innerText : "untitled";
         context.author = author ? author.innerText : "who knows?!";
+        context.language = language ? language.innerText : "en";
         context.saveToken = buildToken(context.title);
         console.log("Playing " + context.title + " by " + context.author);
         console.log("SaveToken: " + context.saveToken);
@@ -439,7 +443,7 @@ function assetsUrl(resource) {
         : "";
 }
 function parseBackground(e) {
-    const style = parseStyleAttributes(e).join(" ");
+    const style = getCharacterStyle(parseStyleAttributes(e));
     setBackgroundEffect("");
     const backTag = seekTag(e.innerText);
     if (backTag) {
@@ -456,10 +460,9 @@ function setBackgroundEffect(effect) {
 }
 function setBackground(url, style) {
     context.toBeSaved.bk = url;
-    elements.bg.setAttribute("style", (url === ""
+    elements.bg.setAttribute("style", url === ""
         ? "background-image:none;"
-        : `background-image:url(${assetsUrl(url)});`) +
-        (style !== "" ? `filter: ${style};` : ""));
+        : `background-image:url(${assetsUrl(url)});${style};`);
 }
 function setLabel(text) {
     Config.showTokenDebug && console.log("label settata", text);

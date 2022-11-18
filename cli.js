@@ -176,9 +176,11 @@ function build(source, options) {
             var menuResult = replaceAll(menu, "$TITLE$", config.title);
             menuResult = replaceAll(menuResult, "$PAGETITLE$", config.pageTitle);
             menuResult = replaceAll(menuResult, "$AUTHOR$", config.author);
+            menuResult = replaceAll(menuResult, "$PAGELANG$", parsed.language);
             var result = replaceAll(frame, "$TITLE$", config.title);
             result = replaceAll(result, "$PAGETITLE$", config.pageTitle);
             result = replaceAll(result, "$AUTHOR$", config.author);
+            result = replaceAll(result, "$PAGELANG$", parsed.language);
             var rname = Math.random().toString(36).substring(2, 15) +
                 Math.random().toString(23).substring(2, 5);
             var engine = require.resolve("./engine/vnengine.js");
@@ -233,6 +235,7 @@ function checkSource(source) {
         menuResource: "",
         title: "Unknown title",
         author: "Unknown author",
+        language: "",
         characters: [],
         labels: [],
         jumps: [],
@@ -329,7 +332,7 @@ function checkSource(source) {
                                     (0, errorCodes_1.addError)("ERR005", parser_1.startIndex, parser_1.endIndex, "Background node must be used in reference or chapters only");
                                 }
                             }
-                            checkValidAttributes_1(name, attributes, ["flip", "blur", "gray", "flash", "thunder"], false);
+                            checkValidAttributes_1(name, attributes, ["flip", "blur", "gray", "flash", "thunder", "immediate"], false);
                             break;
                         case "nm":
                             if (grandIs_1("vnd")) {
@@ -343,6 +346,7 @@ function checkSource(source) {
                             break;
                         case "st":
                         case "au":
+                        case "ln":
                             check1_1(name, "vnd", true);
                             break;
                         case "gt":
@@ -446,6 +450,12 @@ function checkSource(source) {
                     case "st":
                         parsed.title = text;
                         break;
+                    case "ln":
+                        parsed.language = text;
+                        if (text === "" || text.length < 2) {
+                            (0, errorCodes_1.addError)("ERR005", parser_1.startIndex, parser_1.endIndex, "invalid language code \"".concat(text, "\""));
+                        }
+                        break;
                     case "bk":
                         if (grandIs_1("vn") &&
                             parsed.characters.findIndex(function (c) { return c.text === text; }) < 0 &&
@@ -542,13 +552,13 @@ function checkSource(source) {
             }
         });
         console.log("References");
-        parsed.characters.forEach(function (e) { return console.log("- ".concat(e)); });
+        parsed.characters.forEach(function (e) { return console.log("- ".concat(e.text)); });
         console.log("");
         console.log("Labels");
-        parsed.labels.forEach(function (e) { return console.log("- ".concat(e)); });
+        parsed.labels.forEach(function (e) { return console.log("- ".concat(e.text)); });
         console.log("");
         console.log("Variables");
-        parsed.variables.forEach(function (e) { return console.log("- ".concat(e)); });
+        parsed.variables.forEach(function (e) { return console.log("- ".concat(e.text)); });
         console.log("");
         console.log("Menu background: ".concat(parsed.menuResource));
         console.log("");
@@ -558,6 +568,14 @@ function checkSource(source) {
         console.log("");
         console.log("Title: ".concat(parsed.title, ", Author: ").concat(parsed.author));
         console.log("");
+        if (!parsed.language || parsed.language == "") {
+            parsed.language = "en";
+            console.log("Warning: No language tag defined, switching to english by default.");
+            console.log("");
+        }
+        else {
+            console.log("Story language: ".concat(parsed.language));
+        }
     }
     catch (err) {
         console.log("Error in syntax checking: ", err);
