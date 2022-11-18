@@ -11,6 +11,7 @@ var commander_1 = require("commander");
 var child_process_1 = require("child_process");
 var htmlparser2_1 = require("htmlparser2");
 var errorCodes_1 = require("./errorCodes");
+var localization_json_1 = __importDefault(require("./localization.json"));
 var program = new commander_1.Command();
 program
     .name("vnml")
@@ -56,7 +57,8 @@ function getDefaultConfig(source, options) {
         author: "Unspecified...",
         pageTitle: "VNML Game",
         port: options.port || "8080",
-        menuBackground: ""
+        menuBackground: "",
+        mobileMenuBackground: ""
     };
 }
 function checkSourceExistance(config) {
@@ -165,6 +167,10 @@ function build(source, options) {
             config.author = parsed.author;
             config.pageTitle = "".concat(parsed.title, " by ").concat(parsed.author);
             config.menuBackground = parsed.menuResource;
+            config.mobileMenuBackground =
+                parsed.menuResourceMobile !== ""
+                    ? parsed.menuResourceMobile
+                    : parsed.menuResource;
             var frameTemplate = require.resolve("./engine/frame.template");
             var frame = fs_1["default"].readFileSync(frameTemplate, {
                 encoding: "utf8"
@@ -190,11 +196,18 @@ function build(source, options) {
             result = result
                 .replace("vnengine.js", "".concat(rname, ".js"))
                 .replace("vncore.css", "".concat(rname, ".css"));
+            var localizer = localization_json_1["default"][parsed.language]
+                ? localization_json_1["default"][parsed.language]
+                : localization_json_1["default"]["en"];
             menuResult = menuResult
                 .replace("vnengine.js", "".concat(rname, ".js"))
                 .replace("vncore.css", "".concat(rname, ".css"))
                 .replace("$DESTINATION$", "./".concat(rname, ".html"))
-                .replace("$MENUBACKGROUND$", assetsUrl(config.menuBackground));
+                .replace("$MENUBACKGROUND$", assetsUrl(config.menuBackground))
+                .replace("$MENUBACKGROUNDMOBILE$", assetsUrl(config.mobileMenuBackground))
+                .replace("$MENUV1$", localizer.slotText)
+                .replace("$MENUV2$", localizer.newGameText)
+                .replace("$MENUV3$", localizer.clearText);
             fs_1["default"].writeFileSync(config.destFullPath, menuResult);
             result = result
                 .replace("$ITSAME$", sourceVnml)
@@ -233,6 +246,7 @@ function checkSource(source) {
     var hasTextValue = false;
     var parsed = {
         menuResource: "",
+        menuResourceMobile: "",
         title: "Unknown title",
         author: "Unknown author",
         language: "",
@@ -332,7 +346,26 @@ function checkSource(source) {
                                     (0, errorCodes_1.addError)("ERR005", parser_1.startIndex, parser_1.endIndex, "Background node must be used in reference or chapters only");
                                 }
                             }
-                            checkValidAttributes_1(name, attributes, ["flip", "blur", "gray", "flash", "thunder", "immediate"], false);
+                            checkValidAttributes_1(name, attributes, [
+                                "flip",
+                                "blur",
+                                "gray",
+                                "flash",
+                                "thunder",
+                                "immediate",
+                                "shake",
+                                "quake",
+                            ], false);
+                            break;
+                        case "bkm":
+                            if (grandIs_1("vnd")) {
+                                if (alreadyFound_1("bkm")) {
+                                    (0, errorCodes_1.addError)("ERR003", parser_1.startIndex, parser_1.endIndex, "Mobile image node must be unique in reference");
+                                }
+                            }
+                            else if (parentIs_1("vn")) {
+                                (0, errorCodes_1.addError)("ERR003", parser_1.startIndex, parser_1.endIndex, "Mobile image node must be used in named references only");
+                            }
                             break;
                         case "nm":
                             if (grandIs_1("vnd")) {
@@ -471,6 +504,15 @@ function checkSource(source) {
                             parsed.menuResource = text;
                         }
                         break;
+                    case "bkm":
+                        if (!isImageResource_1(text)) {
+                            (0, errorCodes_1.addError)("ERR005", parser_1.startIndex, parser_1.endIndex, "mobile background \"".concat(text, "\" is not an image url"));
+                            return;
+                        }
+                        if (grandIs_1("menu")) {
+                            parsed.menuResourceMobile = text;
+                        }
+                        break;
                     case "cl":
                     case "cr":
                     case "cm":
@@ -561,6 +603,9 @@ function checkSource(source) {
         parsed.variables.forEach(function (e) { return console.log("- ".concat(e.text)); });
         console.log("");
         console.log("Menu background: ".concat(parsed.menuResource));
+        console.log("Mobile menu background: ".concat(parsed.menuResourceMobile !== ""
+            ? parsed.menuResourceMobile
+            : parsed.menuResource));
         console.log("");
         console.log("Total number of jumps: ".concat(parsed.jumps.length));
         console.log("Total number of choices: ".concat(parsed.choices));

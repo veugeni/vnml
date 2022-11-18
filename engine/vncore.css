@@ -745,6 +745,7 @@ body {
   color: black;
   text-align: center;
   margin-top: 0.5em;
+  font-size: medium;
 }
 
 .VNMButton {
@@ -798,4 +799,40 @@ body {
   flex-direction: column;
   width: 100%;
   max-width: 384px;
+}
+
+@keyframes shake1 {
+  0% {
+    transform: translate(0, 0);
+  }
+  10% {
+    transform: translate(-2px, -3px);
+  }
+  20% {
+    transform: translate(3px, -3px);
+  }
+  30% {
+    transform: translate(0px, 5px);
+  }
+  40% {
+    transform: translate(-4px, 0px);
+  }
+  50% {
+    transform: translate(7px, -4px);
+  }
+  60% {
+    transform: translate(0px, 0px);
+  }
+  70% {
+    transform: translate(8px, -3px);
+  }
+  80% {
+    transform: translate(-1px, 5px);
+  }
+  90% {
+    transform: translate(-1px, 0px);
+  }
+  100% {
+    transform: translate(3px, 4px);
+  }
 }

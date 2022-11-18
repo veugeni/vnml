@@ -17,6 +17,7 @@ const StyledAttributes = {
         return ` -webkit-transform: rotateZ(${angle}deg);transform: rotateZ(${angle}deg);`;
     },
     immediate: () => " transition-duration: 0s !important",
+    shake: () => " animation: shake1 1s infinite",
 };
 const EffectAttributes = {
     flash: "animation: flash1 1s",
@@ -70,6 +71,7 @@ const context = {
     waitTimeout: 0,
     gameOver: false,
     finalScore: 0,
+    isMobile: window.screen.width <= 736,
 };
 const Config = {
     typeWriterSpeed: 50,
@@ -141,6 +143,7 @@ function startup() {
             localStorage.removeItem(context.saveToken);
             window.location.href = window.location.href.replace(`c=${context.slot}`, `s=${context.slot}`);
         }
+        window.addEventListener("resize", () => (context.isMobile = window.screen.width <= 736));
         step();
         if (params.has("g")) {
             console.log("Forced jump to label", params.get("g"));
@@ -447,7 +450,10 @@ function parseBackground(e) {
     setBackgroundEffect("");
     const backTag = seekTag(e.innerText);
     if (backTag) {
-        setBackground(backTag.querySelector("bk").innerText, style);
+        const bk = context.isMobile && backTag.querySelector("bkm")
+            ? backTag.querySelector("bkm").innerText
+            : backTag.querySelector("bk").innerText;
+        setBackground(bk, style);
     }
     else {
         setBackground(e.innerText, style);
@@ -559,7 +565,10 @@ function parseCharacter(e, w) {
     Config.showTokenDebug && console.log("parse char", e, w, context);
     const characterTag = seekTag(e.innerText);
     if (characterTag) {
-        setCharacter(characterTag.querySelector("bk").innerText, w, parseStyleAttributes(e));
+        const bk = context.isMobile && characterTag.querySelector("bkm")
+            ? characterTag.querySelector("bkm").innerText
+            : characterTag.querySelector("bk").innerText;
+        setCharacter(bk, w, parseStyleAttributes(e));
         setLabel(characterTag.querySelector("nm").innerText);
     }
     else {
@@ -886,19 +895,22 @@ function slots(token) {
         return null;
     }
 }
-function menu(title) {
+function menu(title, background, mobileBackground, slotText, newGameText, clearText) {
     console.log("Building menu");
     const token = buildToken(title);
     console.log("Token", token);
     const saved = slots(token);
     console.log("Saved", saved);
     const menuContainer = document.querySelector(".VNMBackground");
+    menuContainer.setAttribute("style", `background-image: url(${context.isMobile ? mobileBackground : background})`);
     for (var i = 0; i < 3; i++) {
         const b = document.createElement("div");
         b.className = "VNMButton disable-select";
-        const text = saved && saved.slots[i] ? `Slot ${i + 1}` : `New game slot ${i + 1}`;
-        const date = saved && saved.slots[i] ? saved.slots[i].date : "";
-        const clear = saved && saved.slots[i] ? "Clear" : "";
+        const text = saved && saved.slots[i] ? `${slotText}` : `${newGameText}`;
+        const date = saved && saved.slots[i]
+            ? new Date(saved.slots[i].date).toLocaleString()
+            : "";
+        const clear = saved && saved.slots[i] ? clearText : "";
         b.innerHTML = `<div class='VNMButtonLabel'><span class='VNMText' onclick='go(${i}, false)'>${text}</span><span class='VNMDate'>${date}
     </span></div><div class='VNMClearButton' onclick='go(${i}, true)'>${clear}</div>`;
         menuContainer.appendChild(b);

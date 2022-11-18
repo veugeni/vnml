@@ -184,6 +184,32 @@ The same applies for audio resources but with `.ogg, .mp3, .wav` suffixes.
 
 Any other string will be considered a named resource and looked in the `<vnd>` tag.
 
+When in need to use a different image for mobile devices instead of automatic image resizing you can use the special tag `<bkm></bkm>`. It works exactly as `<bk>` and must be added to the same named resource to specify the correct image to use. It can't be used in the story.
+
+```
+  <vnd>
+    // A classic use of <bkm>
+    <menu>
+       <bk>desktop_menu_background.jpg</bk>
+       <bkm>mobile_menu_background.jpg</bkm>
+    </menu>
+
+    // Can be used for backgrounds
+    <thepub>
+       <bk>desktop_pub.jpg</bk>
+       <bkm>mobile_pub.jpg</bkm>
+    </thepub>
+
+    // Or in characters
+    <theguy>
+       <nm>Mr Responsive</nm>
+       <bk>desktop_guy.png</bk>
+       <bkm>mobile_guy.jpg</bkm>
+    </theguy>
+
+  </vnd>
+```
+
 NB: vnml compiler will signal mismatches in named resources and so on but can't know if a resource is present over a remote server.
 
 # Variables
@@ -306,6 +332,10 @@ The initial menu is a page where the player can choose the save slot. If the slo
 The `<menu>` tag can be used to specify a background image for the menu, otherwise it will be black. Yes, black, with title and author as specified by `<st>` and `<au>` tags.
 
 **Future releases will allow more customization, honest.**
+
+# Languages and translations
+
+Taking advantage of modern browsers VNML supports all unicode caracters and languages, it means you can write chapters directly in your mother tongue. Specify the `<ln></ln>` tag is not mandatory but it will enable automatic translations if user's browser has that feature. Quality and realiability of automatic translations may vary but it can be useful and moreover are free.
 
 # The story bundle (how to compile and distribute)
 

@@ -1,0 +1,12 @@
+{
+  "en": {
+    "slotText": "Continue",
+    "newGameText": "New game",
+    "clearText": "Restart"
+  },
+  "it": {
+    "slotText": "Continua",
+    "newGameText": "Nuovo gioco",
+    "clearText": "Ricomincia"
+  }
+}

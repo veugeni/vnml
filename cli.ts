@@ -12,6 +12,7 @@ import {
   hasErrors,
   showCheckResults,
 } from "./errorCodes";
+import localization from "./localization.json";
 
 const program = new Command();
 
@@ -58,6 +59,7 @@ interface Config {
   pageTitle: string;
   port: string;
   menuBackground: string;
+  mobileMenuBackground: string;
 }
 
 function getDefaultConfig(source: string, options: any): Config {
@@ -82,6 +84,7 @@ function getDefaultConfig(source: string, options: any): Config {
     pageTitle: "VNML Game",
     port: options.port || "8080",
     menuBackground: "",
+    mobileMenuBackground: "",
   };
 }
 
@@ -212,6 +215,10 @@ function build(source: string, options: any) {
       config.author = parsed.author;
       config.pageTitle = `${parsed.title} by ${parsed.author}`;
       config.menuBackground = parsed.menuResource;
+      config.mobileMenuBackground =
+        parsed.menuResourceMobile !== ""
+          ? parsed.menuResourceMobile
+          : parsed.menuResource;
 
       const frameTemplate = require.resolve("./engine/frame.template");
 
@@ -251,11 +258,23 @@ function build(source: string, options: any) {
         .replace("vnengine.js", `${rname}.js`)
         .replace("vncore.css", `${rname}.css`);
 
+      const localizer = localization[parsed.language]
+        ? localization[parsed.language]
+        : localization["en"];
+
       menuResult = menuResult
         .replace("vnengine.js", `${rname}.js`)
         .replace("vncore.css", `${rname}.css`)
         .replace("$DESTINATION$", `./${rname}.html`)
-        .replace("$MENUBACKGROUND$", assetsUrl(config.menuBackground));
+        .replace("$MENUBACKGROUND$", assetsUrl(config.menuBackground))
+        .replace(
+          "$MENUBACKGROUNDMOBILE$",
+          assetsUrl(config.mobileMenuBackground)
+        )
+        .replace("$MENUV1$", localizer.slotText)
+        .replace("$MENUV2$", localizer.newGameText)
+        .replace("$MENUV3$", localizer.clearText);
+
       fs.writeFileSync(config.destFullPath, menuResult);
 
       result = result
@@ -315,6 +334,7 @@ function checkSource(source: string) {
 
   const parsed = {
     menuResource: "",
+    menuResourceMobile: "",
     title: "Unknown title",
     author: "Unknown author",
     language: "",
@@ -458,9 +478,37 @@ function checkSource(source: string) {
                 checkValidAttributes(
                   name,
                   attributes,
-                  ["flip", "blur", "gray", "flash", "thunder", "immediate"],
+                  [
+                    "flip",
+                    "blur",
+                    "gray",
+                    "flash",
+                    "thunder",
+                    "immediate",
+                    "shake",
+                    "quake",
+                  ],
                   false
                 );
+                break;
+              case "bkm":
+                if (grandIs("vnd")) {
+                  if (alreadyFound("bkm")) {
+                    addError(
+                      "ERR003",
+                      parser.startIndex,
+                      parser.endIndex,
+                      "Mobile image node must be unique in reference"
+                    );
+                  }
+                } else if (parentIs("vn")) {
+                  addError(
+                    "ERR003",
+                    parser.startIndex,
+                    parser.endIndex,
+                    "Mobile image node must be used in named references only"
+                  );
+                }
                 break;
               case "nm":
                 if (grandIs("vnd")) {
@@ -655,7 +703,21 @@ function checkSource(source: string) {
               if (grandIs("menu")) {
                 parsed.menuResource = text;
               }
+              break;
+            case "bkm":
+              if (!isImageResource(text)) {
+                addError(
+                  "ERR005",
+                  parser.startIndex,
+                  parser.endIndex,
+                  `mobile background "${text}" is not an image url`
+                );
+                return;
+              }
 
+              if (grandIs("menu")) {
+                parsed.menuResourceMobile = text;
+              }
               break;
             case "cl":
             case "cr":
@@ -810,6 +872,13 @@ function checkSource(source: string) {
     parsed.variables.forEach((e) => console.log(`- ${e.text}`));
     console.log("");
     console.log(`Menu background: ${parsed.menuResource}`);
+    console.log(
+      `Mobile menu background: ${
+        parsed.menuResourceMobile !== ""
+          ? parsed.menuResourceMobile
+          : parsed.menuResource
+      }`
+    );
     console.log("");
     console.log(`Total number of jumps: ${parsed.jumps.length}`);
     console.log(`Total number of choices: ${parsed.choices}`);
