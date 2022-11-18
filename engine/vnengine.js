@@ -147,6 +147,8 @@ function startup() {
         step();
         if (params.has("g")) {
             console.log("Forced jump to label", params.get("g"));
+            // This is a debug feature.
+            context.gameOver = false;
             moveTo(params.get("g"));
         }
     }
@@ -340,6 +342,10 @@ function render() {
     }
 }
 function step() {
+    if (context.gameOver === true) {
+        Config.showTokenDebug && console.log("Game is over");
+        return;
+    }
     Config.showTokenDebug && console.log("Stepping", context);
     if (context.state === "WAIT_FOR_TIME" || context.state === "WAIT_FOR_KEY") {
         showTextWindow(true);
