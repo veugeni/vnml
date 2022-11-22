@@ -621,7 +621,9 @@ function setParagraph(text: string) {
   context.subPage = 0;
 }
 
-function splitInLines(text: string) {
+function splitInLines(sourceText: string) {
+  const text = sanitize(sourceText);
+
   const result = [];
   let buffer = "";
 
@@ -970,7 +972,27 @@ function addFrontend() {
   document.querySelector("body").appendChild(p);
 }
 
-function typeWriter(text: string) {
+const LF = `\u{000a}`; // Line Feed (\n)
+const VT = `\u{000b}`; // Vertical Tab
+const FF = `\u{000c}`; // Form Feed
+const CR = `\u{000d}`; // Carriage Return (\r)
+const CRLF = `${CR}${LF}`; // (\r\n)
+const NEL = `\u{0085}`; // Next Line
+const LS = `\u{2028}`; // Line Separator
+const PS = `\u{2029}`; // Paragraph Separator
+const lineTerminators = new RegExp(
+  [LF, VT, FF, CR, CRLF, NEL, LS, PS].join("|")
+);
+
+function sanitize(sourceText: string) {
+  return sourceText
+    .trim()
+    .replace(/\n|\r/g, " ")
+    .replace(lineTerminators, " ")
+    .replace(/\s\s+/g, " ");
+}
+
+function typeWriter(sourceText: string) {
   context.twTextIndex = 0;
   context.isWriting = false;
   elements.p.innerHTML = "";
@@ -980,29 +1002,33 @@ function typeWriter(text: string) {
 
   window.clearInterval(context.typeWriter);
 
-  if (text !== "") {
-    context.writingText = text;
+  const endTypewriter = () => {
+    Config.showTokenDebug && console.log("Typewriter ended");
+    window.clearInterval(context.typeWriter);
+    context.isWriting = false;
+    if (
+      context.choices.length > 0 &&
+      context.subPage === context.lines.length - 1
+    ) {
+      Config.showTokenDebug && console.log("Enabling choices", context);
+      showChoices();
+      context.state = "CHOOSING";
+    } else {
+      Config.showTokenDebug && console.log("Enabling interaction", context);
+      context.state = "INTERACTION";
+      showNextButton();
+    }
+  };
+
+  if (sourceText !== "") {
+    context.writingText = sourceText;
     context.typeWriter = window.setInterval(() => {
-      if (context.twTextIndex < text.length) {
-        elements.p.innerHTML += text[context.twTextIndex];
+      if (context.twTextIndex < context.writingText.length) {
+        elements.p.innerHTML += context.writingText[context.twTextIndex];
         context.twTextIndex++;
         context.isWriting = true;
       } else {
-        Config.showTokenDebug && console.log("Typewriter ended");
-        window.clearInterval(context.typeWriter);
-        context.isWriting = false;
-        if (
-          context.choices.length > 0 &&
-          context.subPage === context.lines.length - 1
-        ) {
-          Config.showTokenDebug && console.log("Enabling choices", context);
-          showChoices();
-          context.state = "CHOOSING";
-        } else {
-          Config.showTokenDebug && console.log("Enabling interaction", context);
-          context.state = "INTERACTION";
-          showNextButton();
-        }
+        endTypewriter();
       }
     }, Config.typeWriterSpeed);
   }
