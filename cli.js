@@ -389,6 +389,9 @@ function checkSource(source) {
                             check1_1(name, "vn", false);
                             parsed.choices++;
                             break;
+                        case "jmp":
+                            check1_1(name, "vn", false);
+                            break;
                         case "hideifzero":
                         case "showifzero":
                         case "showifnonzero":
@@ -471,6 +474,7 @@ function checkSource(source) {
                         });
                         break;
                     case "gt":
+                    case "jmp":
                         parsed.jumps.push({
                             text: text,
                             startIndex: parser_1.startIndex,

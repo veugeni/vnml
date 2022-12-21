@@ -1,6 +1,6 @@
 # The VNML Manual
 
-#### version 1.0.1
+#### version 1.0.3
 
 ## Foreword
 
@@ -39,7 +39,7 @@ single characters, and so on. (Please read the foreword.)
 
 Any kind of image can be used as a backgroud. The engine will adapt it to show the central part over the 70% of screen height to be nicely shown on mobile devices too. A resolution of 1280x720 is usually good.
 
-The tag responsible for changing the background is `<bk></bk>` and can have different attributes for special effects: `"flip", "blur", "gray", "flash", "thunder", "immediate"`
+The tag responsible for changing the background is `<bk></bk>` and can have different attributes for special effects: `"flip", "blur", "gray", "flash", "thunder", "immediate", "shake", "quake"`
 
 ```
  // Shows the background named house_in_the_forest
@@ -91,13 +91,6 @@ The story is a sequence of chapters, read from above to below, with optional jum
 ```
 <p>This is an anonimous chapter, no name is shown on the speaker label!</p>
 <tiger>In here tiger is speaking, tiger's name will be shown.</tiger>
-
-// There's a twist in naming... this is useful when changing
-// characters during dialogs.
-<cl>jon</cl>
-<cr>tiger<cr>
-<p>In here is tiger speaking! Because it's the last character shown.</p>
-<jon>Now it's Jon replying!</jon>
 
 ```
 
@@ -222,7 +215,7 @@ When in a choice one or more of `<hideifzero>, <hideifnonzero>, <showifzero>, <s
 A variable name can be any string of text, as a professional advice avoid short stupid names like `a1`, or spaces and weird characters but use a meaningful name: `can_eat_at_diner`.
 All variables start as zero, any value greater than zero is considered non zero, any value below zero is considered zero.
 
-**Why have do we can increment and decrement when the only check made is if zero or not? Because it's ready for future conditions if needed. If not assume that <inc> and <showifnonzero> are good enough**
+**Why have do we can increment and decrement when the only check made is if zero or not? Because it's ready for future conditions if needed. If not assume that "inc" and "showifnonzero" are good enough for almost all cases**
 
 ```
     <!-- ... blah blah ... -->
@@ -241,7 +234,7 @@ All variables start as zero, any value greater than zero is considered non zero,
 
 # Comments
 
-No, I'm not talking of you telling me how much you like this idea. (Even if it would be apreciated). Comments are special tags that can be placed around to keep track of anything you may need. The syntax is the same as in HTML and can contain any amount of text because they'll be completely ignored by the engine.
+No, I'm not talking of you telling me how much you like this idea. (Even if it would be appreciated). Comments are special tags that can be placed around to keep track of anything you may need. The syntax is the same as in HTML and can contain any amount of text because they'll be completely ignored by the engine.
 
 ```
     <!-- THIS IS A COMMENT -->
@@ -257,10 +250,14 @@ No, I'm not talking of you telling me how much you like this idea. (Even if it w
          because the end tag is missing a dash :) ->
 ```
 
-# The end tag
+# The end and jump tagd
 
-The end tag `<end></end>` is a precious ally and deserves a proper paragraph and explanation. When the engine reaches an end tag it will stop, pretty simple. All the ending, credits, and final greetings are normal chapters and if no end tag is properly placed the engine will show them and then proceed.
-Another user of the end tag is to tell the engine if there's a variable containing the score of the game.
+The end tag `<end></end>` and jump tag `<jmp></jmp>` are precious allies and deserve a proper paragraph and explanation. When the engine reaches an end tag it will stop, pretty simple. All the ending, credits, and final greetings are normal chapters in vnml logic so, if no end tag is properly placed the engine will show them and then proceed.
+The jump tag will move the game to the label specified, the jump will happen as soon as the user interacts with the paragraph to continue giving the illusion of a linear story.
+
+What's the need for that?
+Everytime you put a choice in the novel a sort of "new timeline" is make in the game. With no mean to let the various branches merge at a certain point the story will be impossible to write because any decision will lead to a complete different "future". Using jump you can force the story to take
+a specific path and the reader will continue from there.
 
 ```
 
@@ -287,14 +284,22 @@ Another user of the end tag is to tell the engine if there's a variable containi
     <bk>theplace</bk>
     <cm>tiger</cm>
     <tiger>Hello it'sa me! Mister Tiger!</tiger>
-    <ch>Should I go to the bad ending</ch>
-    <ch>Or should I go to the good ending? <gt>good_ending</gt></ch>
+    <jmp>a_tricky_label</jmp>
+
+    <!-- the game will skip this part -->
+    <tiger>Sadly this text will never be shown!</tiger>
+
+    <lb>a_tricky_label</lb>
+    <tiger>Please choose my destiny.</tiger>
+
+    <ch>Should I go to the bad ending?</ch>
+    <ch>Should I go to the good ending? <gt>good_ending</gt></ch>
     <bk>thebadscreen.jpg</bk>
     <sfx>theuglysound.ogg</sfx>
     <p>OH no! This is a bad ending!!! So bad! So bad!!!</p>
 
-    <!-- Try to remove this ^_^ -->
-    <end>score</end>
+    <!-- Try to remove this and see what happens -->
+    <end></end>
 
     <lb>good_ending</lb>
     <inc>score</inc>

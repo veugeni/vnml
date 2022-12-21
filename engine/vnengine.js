@@ -72,6 +72,7 @@ const context = {
     gameOver: false,
     finalScore: 0,
     isMobile: window.screen.width <= 736,
+    jumpTo: "",
 };
 const Config = {
     typeWriterSpeed: 50,
@@ -212,6 +213,9 @@ function parse(e) {
                 Config.showTokenDebug &&
                     console.log("Labels & gotos & stuff to be ignored");
                 return false;
+            case "JMP":
+                parseJump(e);
+                return true;
             case "WAIT":
                 parseWait(e);
                 return true;
@@ -267,9 +271,9 @@ function setBackgroundMusic(url) {
 function moveTo(label) {
     if (label !== "") {
         console.log("Seeking label ", label);
+        context.jumpTo = "";
         for (let i = 0; i < elements.vn.children.length; i++) {
             const e = elements.vn.children[i];
-            console.log("element at " + i, e.tagName);
             if (e.tagName === "LB" && e.innerText === label) {
                 console.log("Found label " + label + " at " + i);
                 setProgramCounter(i + 1);
@@ -388,6 +392,11 @@ function step() {
             Config.showTokenDebug && console.log("has next subpage");
             context.state = "WRITING";
         }
+        if (context.subPagesEnded && context.jumpTo !== "") {
+            Config.showTokenDebug && console.log("Has jump to", context.jumpTo);
+            moveTo(context.jumpTo);
+            return;
+        }
     }
     if (context.state === "SEEK_PARAGRAPH") {
         resetWait();
@@ -395,7 +404,7 @@ function step() {
         fetchParagraph();
         render();
         save(context.slot);
-        if (!setWait()) {
+        if (!setWait() && context.jumpTo === "") {
             Config.showTokenDebug && console.log("Nothing to wait");
             context.state = "WRITING";
         }
@@ -422,11 +431,16 @@ function fetchParagraph() {
                 setProgramCounter();
                 return;
             }
-            if (token.tagName !== "CH") {
+            if (token.tagName !== "CH" && token.tagName !== "JMP") {
                 Config.showTokenDebug && console.log("closing chapter", token.tagName);
                 setProgramCounter();
                 return;
             }
+        }
+        if (token.tagName === "JMP") {
+            Config.showTokenDebug && console.log("jumping");
+            parse(token);
+            return;
         }
         const isParagraph = parse(token);
         if (isParagraph)
@@ -611,12 +625,16 @@ function evaluateCondition(c) {
         switch (c.tagName) {
             case "HIDEIFZERO":
             case "SHOWIFNONZERO":
-                if (value === 0)
+                if (value === 0) {
                     return false;
+                }
+                break;
             case "SHOWIFZERO":
             case "HIDEIFNONZERO":
-                if (value !== 0)
+                if (value !== 0) {
                     return false;
+                }
+                break;
         }
     }
     return true;
@@ -655,6 +673,10 @@ function parseChoice(e) {
             Config.showTokenDebug && console.log("La scelta viene nascosta");
         }
     }
+}
+function parseJump(e) {
+    Config.showTokenDebug && console.log("Jump to", e.innerText);
+    context.jumpTo = e.innerText;
 }
 function parseWait(e) {
     Config.showTokenDebug && console.log("parsing wait");

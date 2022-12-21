@@ -1,6 +1,6 @@
 # vnml
 
-## Visual Novel Markup Language.
+## Visual Novel Markup Language. Version 1.0.3
 
 An attempt for a pure HTML/JS Visual novels over the internet engine.
 
@@ -31,10 +31,9 @@ Goals:
 
    - Customization via additional css files.
 
-### What's (not) in 1.0.0.0 alpha 1 version
+### What's (not) in 1.0.3 version
 
 - Missing additional CSS templates. (You can always edit the built css with your stuff if you like. That's the good part of having a pure HTML game.)
-- Missing language support
 - Missing fonts change / preload
 
 ## How to install
@@ -81,7 +80,7 @@ then launch `vnml c test.vnml`
 If everything is ok you'll se an output like this:
 
 ```
-VNML Compiler & builder v.1.0.0
+VNML Compiler & builder v.1.0.3
 
 Checking test.vnml
 
