@@ -1,6 +1,6 @@
 # vnml
 
-## Visual Novel Markup Language. Version 1.0.3
+## Visual Novel Markup Language. Version 1.0.5
 
 An attempt for a pure HTML/JS Visual novels over the internet engine.
 
