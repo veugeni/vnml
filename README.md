@@ -6,6 +6,8 @@ An attempt for a pure HTML/JS Visual novels over the internet engine.
 
 (What's a Visual Novel? Click [here](https://it.wikipedia.org/wiki/Visual_novel).)
 
+Do you want a taste of it? Go [here](https://www.valentinoeugeni.it/ga/lmv.html) (This visual novel is in **italian**, but you can use browser's translation features, or help me translate it. Also artists who would like to help make it better are welcome.)
+
 Goals:
 
 1. **Pure HTML/JS game.**
