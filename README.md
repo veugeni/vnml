@@ -11,7 +11,7 @@ Goals:
 1. **Pure HTML/JS game.**
 
    - The novel is stored directly in HTML file.
-   - Game saved in browser's local storage (few bytes).
+   - Game saved in browser's local storage.
 
 2. **Complete portability.**
 
@@ -25,7 +25,7 @@ Goals:
 
 4. **Easy to use.**
 
-   - No coding required. Just write VNML in a file, (you can use any kind of html editor for source highlighting), build, and share. VNML compiler provides code checking and testing via embedded server.
+   - No particular coding skills required. Just write VNML source in a file, (you can use any kind of html editor for source highlighting), build, and share. VNML compiler provides code checking and testing via embedded server.
 
 5. **CSS Templates.**
 
@@ -33,8 +33,9 @@ Goals:
 
 ### What's (not) in 1.0.3 version
 
-- Missing additional CSS templates. (You can always edit the built css with your stuff if you like. That's the good part of having a pure HTML game.)
-- Missing fonts change / preload
+- Additional CSS templates.
+- Fonts change / preload.
+- Opengraph / SEO settings.
 
 ## How to install
 
@@ -54,9 +55,9 @@ or
 
 # An example
 
-VNML has the same syntax as HTML but there is no need to know HTML, just a few tags and rules. If you're curious about HTML take a look [here](https://www.codecademy.com/learn/learn-html).
+VNML has the same basic syntax of HTML but there is no need to know full HTML, just a few tags and rules. If you're curious about what HTML is take a look [here](https://www.codecademy.com/learn/learn-html).
 
-You can use a plain text editor but an HTML enabled one (like VS Code, or Notepad++) will provide useful code highlights and tags closure and that's handy.
+VNML can be written with a plain text editor but an HTML enabled one (like VS Code, or Notepad++) will provide useful code highlights and tags closure that are handy.
 
 For a complete VNML documentation refer to the [VNML Manual](docs/vnmlmanual.md).
 
@@ -103,7 +104,7 @@ VNML comes with an embedded web server for testing purposes.
 `vnml b test.vnml -c -r`
 your default browser should open with the menu screen.
 
-## The Future
+## What's in the Future?
 
-- A standalone version of the compiler maybe?
+- A standalone version of the compiler, maybe?
 - Video playback?
