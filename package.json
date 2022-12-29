@@ -1,6 +1,6 @@
 {
   "name": "vnmlc",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Visual Novel Markup Language Compiler",
   "main": "index.js",
   "author": "EmperorAppMaker",

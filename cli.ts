@@ -5,15 +5,15 @@ import path from "path";
 import { Command } from "commander";
 import { spawnSync } from "child_process";
 import { Parser } from "htmlparser2";
-const {
+import {
   addError,
   addWarning,
   clearCheckResults,
   hasErrors,
   showCheckResults,
-} = require("./errorCodes");
+} from "./src/errorCodes";
 
-const localization = require("./localization.json");
+import localization from "./src/localization.json";
 
 const program = new Command();
 
