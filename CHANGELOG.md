@@ -27,8 +27,6 @@ Use the following template to create a new Unreleased change log.
 
 ### Added
 
-all base main features
-
 ### Changed
 
 ### Removed
@@ -38,3 +36,9 @@ all base main features
 ### Deprecated
 
 ### Security
+
+## [v1.0.0]
+
+### Added
+
+all base main features

@@ -1,6 +1,6 @@
 # vnml
 
-## Visual Novel Markup Language. Version 1.0.5
+## Visual Novel Markup Language. Version 1.0.8
 
 An attempt for a pure HTML/JS Visual novels over the internet engine.
 
@@ -41,19 +41,7 @@ Goals:
 
 ## How to install
 
-`npm install vnmlc`
-
-or
-
-`yarn add vnmlc`
-
-if you plan to write a lot of visual novels you can install it globally.
-
-`npm install vnmlc -g`
-
-or
-
-`yarn add vnmlc --global`
+`npm install vnmlc --global`
 
 # An example
 
