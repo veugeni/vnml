@@ -1,6 +1,6 @@
 # vnml
 
-## Visual Novel Markup Language. Version 1.0.8
+## Visual Novel Markup Language. Version 1.0.9
 
 An attempt for a pure HTML/JS Visual novels over the internet engine.
 
@@ -33,7 +33,7 @@ Goals:
 
    - Customization via additional css files.
 
-### What's (not) in 1.0.3 version
+### What's (not) in 1.0.9 version
 
 - Additional CSS templates.
 - Fonts change / preload.

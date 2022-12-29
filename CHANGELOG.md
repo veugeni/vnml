@@ -37,7 +37,7 @@ Use the following template to create a new Unreleased change log.
 
 ### Security
 
-## [v1.0.0]
+## [v1.0.9]
 
 ### Added
 
