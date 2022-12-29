@@ -1,0 +1,31 @@
+<vnml>
+  <vnd>
+    <st>Mister Tiger's amazing adventure</st>
+    <au>John Smith</au>
+
+    <menu>
+      <bk>menu_background.jpg</bk>
+      <bkm>menumobile_background.jpg</bkm>
+    </menu>
+
+    <ln>en</ln>
+
+    <!-- This is a named character -->
+    <tiger>
+      <!-- this is the name shown over the chapter -->
+      <nm>Mister Tiger</nm>
+      <!-- This is how Mr Tiger looks like -->
+      <bk>mister_tiger.png</bk>
+    </tiger>
+
+    <!-- This is a background resource -->
+    <theplace>
+      <bk>theplacebackground.jpg</bk>
+    </theplace>
+  </vnd>
+  <vn>
+    <bk>theplace</bk>
+    <cm>tiger</cm>
+    <tiger>Hello it'sa me! Mister Tiger!</tiger>
+  </vn>
+</vnml>
