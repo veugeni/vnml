@@ -836,3 +836,25 @@ body {
     transform: translate(3px, 4px);
   }
 }
+
+@keyframes wobble1 {
+  0% {
+    transform: rotate(0deg) scale(1) translate(0px, 0px);
+  }
+
+  20% {
+    transform: rotate(-5deg) scale(1.5) translate(-50px, -50px);
+  }
+
+  50% {
+    transform: rotate(6deg) scale(1.1) translate(50px, 50px);
+  }
+
+  75% {
+    transform: rotate(-2deg) scale(0.99) translate(50px, -30px);
+  }
+
+  100% {
+    transform: rotate(0deg) scale(1) translate(0px, 0px);
+  }
+}

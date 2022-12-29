@@ -355,6 +355,9 @@ function checkSource(source) {
                                 "immediate",
                                 "shake",
                                 "quake",
+                                "transparent",
+                                "translucent",
+                                "wobble",
                             ], false);
                             break;
                         case "bkm":

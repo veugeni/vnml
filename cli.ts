@@ -487,6 +487,9 @@ function checkSource(source: string) {
                     "immediate",
                     "shake",
                     "quake",
+                    "transparent",
+                    "translucent",
+                    "wobble",
                   ],
                   false
                 );

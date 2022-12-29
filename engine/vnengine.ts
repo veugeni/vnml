@@ -19,6 +19,9 @@ const StyledAttributes = {
   },
   immediate: () => " transition-duration: 0s !important",
   shake: () => " animation: shake1 1s infinite",
+  translucent: () => " opacity: 0.5",
+  transparent: () => " opacity: 0.8",
+  wobble: () => " animation: wobble1 30s ease-in-out 0s infinite both",
 };
 
 const EffectAttributes = {
