@@ -1,6 +1,6 @@
 {
   "name": "vnmlc",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "description": "Visual Novel Markup Language Compiler",
   "main": "index.js",
   "author": "EmperorAppMaker",
@@ -35,5 +35,12 @@
     "src/localization.json",
     "docs/buildme.vnml",
     "docs/vnmlmanual.md"
+  ],
+  "keywords": [
+    "compiler",
+    "visual novel",
+    "html",
+    "game engine",
+    "storytelling"
   ]
 }

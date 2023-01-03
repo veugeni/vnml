@@ -1,6 +1,6 @@
 # The VNML Manual
 
-#### version 1.0.9
+#### version 1.0.12
 
 ## Foreword
 
@@ -506,7 +506,7 @@ try `vnml check ./docs/buildme.vnml`
 you'll see something like:
 
 ```
-VNML Compiler & builder v.1.0.3
+VNML Compiler & builder v.1.0.12
 
 Checking ./docs/buildme.vnml
 
@@ -533,7 +533,7 @@ this should be the outcome:
 
 ```
 
-VNML Compiler & builder v.1.0.3
+VNML Compiler & builder v.1.0.12
 
 Building ./docs/buildme
 

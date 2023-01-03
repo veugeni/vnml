@@ -1,6 +1,6 @@
 # vnml
 
-## Visual Novel Markup Language. Version 1.0.10
+## Visual Novel Markup Language. Version 1.0.12
 
 An attempt for a pure HTML/JS Visual novels over the internet engine.
 
@@ -33,7 +33,7 @@ Goals:
 
    - Customization via additional css files.
 
-### What's (not) in 1.0.10 version
+### What's (not) in 1.0.12 version
 
 - Additional CSS templates.
 - Fonts change / preload.
@@ -71,7 +71,7 @@ then launch `vnml c test.vnml`
 If everything is ok you'll se an output like this:
 
 ```
-VNML Compiler & builder v.1.0.10
+VNML Compiler & builder v.1.0.12
 
 Checking test.vnml
 
