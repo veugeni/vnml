@@ -1,6 +1,6 @@
 # vnml
 
-## Visual Novel Markup Language. Version 1.0.9
+## Visual Novel Markup Language. Version 1.0.10
 
 An attempt for a pure HTML/JS Visual novels over the internet engine.
 
@@ -33,7 +33,7 @@ Goals:
 
    - Customization via additional css files.
 
-### What's (not) in 1.0.9 version
+### What's (not) in 1.0.10 version
 
 - Additional CSS templates.
 - Fonts change / preload.
@@ -71,7 +71,7 @@ then launch `vnml c test.vnml`
 If everything is ok you'll se an output like this:
 
 ```
-VNML Compiler & builder v.1.0.3
+VNML Compiler & builder v.1.0.10
 
 Checking test.vnml
 
@@ -93,6 +93,11 @@ Copy the folder in your favourite webserver and play it with a browser.
 VNML comes with an embedded web server for testing purposes.
 `vnml b test.vnml -c -r`
 your default browser should open with the menu screen.
+
+## What about a taste of it?
+
+Try it out [here](https://www.valentinoeugeni.it/ga/lmv.html)
+(It's italian, I know, but you can use browser's translation capabilities...)
 
 ## What's in the Future?
 

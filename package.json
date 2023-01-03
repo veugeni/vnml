@@ -1,6 +1,6 @@
 {
   "name": "vnmlc",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "Visual Novel Markup Language Compiler",
   "main": "index.js",
   "author": "EmperorAppMaker",
@@ -28,6 +28,8 @@
     "engine/vnengine.js",
     "engine/vncore.css",
     "src/errorCodes.js",
-    "src/localization.json"
+    "src/localization.json",
+    "docs/buildme.vnml",
+    "docs/vnmlmanual.md"
   ]
 }
