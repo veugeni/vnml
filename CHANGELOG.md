@@ -37,6 +37,12 @@ Use the following template to create a new Unreleased change log.
 
 ### Security
 
+## [v1.0.11]
+
+### Fixed
+
+repository reference
+
 ## [v1.0.10]
 
 ### Fixed

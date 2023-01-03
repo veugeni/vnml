@@ -1,6 +1,6 @@
 {
   "name": "vnmlc",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "Visual Novel Markup Language Compiler",
   "main": "index.js",
   "author": "EmperorAppMaker",
@@ -21,6 +21,10 @@
     "htmlparser2": "^8.0.1",
     "http-server": "^14.1.1",
     "typescript": "^4.7.3"
+  },
+  "repository": {
+    "url": "https://github.com/veugeni/vnml",
+    "type": "git"
   },
   "files": [
     "engine/frame.template",
